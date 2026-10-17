@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Socratic Desmos Tutor</title>
+<meta name="description" content="An open-source math tutor that sits beside a Desmos graph and helps students work through hard problems with questions, not answers. Runs on a local model.">
+<style>
+  :root {
+    --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1f24; --muted: #5d636e; --line: #e4e1da;
+    --accent: #2d6cdf; --accent-soft: #e8effc; --tutor: #c7442e; --code-bg: #f2f0eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a; --surface: #1c1f25; --ink: #e9e7e2; --muted: #a0a6b0; --line: #2d3139;
+      --accent: #7aa7ff; --accent-soft: #1f2a3f; --tutor: #ff8a73; --code-bg: #23272e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --surface: #1c1f25; --ink: #e9e7e2; --muted: #a0a6b0; --line: #2d3139;
+    --accent: #7aa7ff; --accent-soft: #1f2a3f; --tutor: #ff8a73; --code-bg: #23272e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  a { color: var(--accent); }
+  header.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+  .brand { font-weight: 650; letter-spacing: -0.01em; }
+  .btn {
+    display: inline-block; padding: 10px 18px; border-radius: 8px; text-decoration: none;
+    font-weight: 600; border: 1px solid var(--line); color: var(--ink); background: var(--surface);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary { color: #0d1320; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0d1320; } }
+
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 40px 0 64px; }
+  h1 { font-size: clamp(2rem, 4.5vw, 3.1rem); line-height: 1.1; letter-spacing: -0.025em; margin: 0 0 18px; }
+  .lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 28px; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* the sample exchange */
+  .demo { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .demo-bar { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }
+  .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .graph { border-right: 1px solid var(--line); padding: 10px; }
+  .graph svg { width: 100%; height: auto; display: block; }
+  .chat { padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; line-height: 1.45; }
+  .msg { padding: 8px 10px; border-radius: 10px; max-width: 95%; }
+  .msg.s { background: var(--accent-soft); align-self: flex-end; }
+  .msg.t { background: var(--code-bg); align-self: flex-start; }
+  .msg.t b { color: var(--tutor); font-weight: 600; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 1.7rem; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .sub { color: var(--muted); max-width: 680px; margin: 0 0 32px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; max-width: 760px; }
+  .steps li { counter-increment: s; position: relative; padding-left: 44px; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 1px; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.9rem;
+    display: grid; place-items: center;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px;
+    overflow-x: auto; font: 0.9rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0 0 16px;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .note { border-left: 3px solid var(--tutor); padding: 4px 0 4px 16px; color: var(--muted); max-width: 760px; }
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; padding-top: 16px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .demo-body { grid-template-columns: 1fr; }
+    .graph { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="brand">Socratic Desmos Tutor</span>
+    <a class="btn" href="https://github.com/killercatfish/desmos-tutor">GitHub</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>A tutor for the hard problems. It won't do them for you.</h1>
+      <p class="lede">The tutor sits beside a Desmos graphing calculator and watches the student's graph as it changes.
+        When they're stuck, it asks one good question about what's on the screen, so the student does the
+        thinking and gets unstuck faster. It runs on a model on your own machine.</p>
+      <div class="actions">
+        <a class="btn primary" href="#start">Run it locally</a>
+        <a class="btn" href="https://github.com/killercatfish/desmos-tutor">View the source</a>
+      </div>
+    </div>
+
+    <figure class="demo" aria-label="Example: a student working on a vertex problem with the tutor">
+      <div class="demo-bar">Find a quadratic with vertex (2, −3) that passes through (0, 5).</div>
+      <div class="demo-body">
+        <div class="graph">
+          <svg viewBox="0 0 200 200" role="img" aria-label="A graph showing the student's downward parabola, a dashed tutor point at the vertex, and the point (0, 5)">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="0" y1="100" x2="200" y2="100"/><line x1="60" y1="0" x2="60" y2="200"/>
+            </g>
+            <!-- student's attempt: right vertex, but opens down -->
+            <path d="M 30 200 Q 90 90 150 200" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+            <!-- given point (0, 5) -->
+            <circle cx="60" cy="25" r="4" fill="var(--ink)"/>
+            <text x="66" y="21" font-size="10" fill="var(--muted)">(0, 5)</text>
+            <!-- tutor's dashed vertex marker -->
+            <circle cx="90" cy="145" r="7" fill="none" stroke="var(--tutor)" stroke-width="2" stroke-dasharray="3 2"/>
+            <text x="100" y="140" font-size="10" fill="var(--tutor)">(2, −3)</text>
+          </svg>
+        </div>
+        <div class="chat">
+          <div class="msg s">Can you just tell me the equation?</div>
+          <div class="msg t">Not the equation, but you're close. <b>I marked the vertex on your graph.</b> Your parabola opens down. Does the point (0, 5) sit above or below the vertex?</div>
+          <div class="msg s">above… so it should open up?</div>
+          <div class="msg t">What in your equation controls which way it opens?</div>
+        </div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>Why it exists</h2>
+    <p class="sub">On a hard problem, an answer machine is the shortest path to "done," so students use one. Banning
+      it doesn't change that. This tutor is built to make thinking it through yourself the faster path: no stalling
+      on one misread step, no waiting a day for feedback, and no skipping the part where you actually learn.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>It never gives the answer</h3>
+        <p>It doesn't give the answer when a student begs, says they're out of time, or claims the teacher said it was OK.
+          It says no warmly in a few words, then asks a question that moves them one step forward.</p>
+      </div>
+      <div class="card">
+        <h3>It reads the graph, not a guess</h3>
+        <p>Each turn starts from the student's live expressions and recent edits. "Your parabola opens down. What
+          controls that?" beats a generic hint.</p>
+      </div>
+      <div class="card">
+        <h3>Hints only after a real try</h3>
+        <p>Every problem has a hint ladder, from vague to specific. The tutor climbs one rung at a time, and only
+          after the student has made a genuine attempt.</p>
+      </div>
+      <div class="card">
+        <h3>It can draw, carefully</h3>
+        <p>When a student is stuck, the tutor can plot a given, like the stated vertex, as a dashed cue. Code
+          enforces that it can only touch its own <code>tutor_</code> expressions, never the student's work.</p>
+      </div>
+      <div class="card">
+        <h3>It checks the math, not vibes</h3>
+        <p>Language models are unreliable at algebra. Before the tutor says "yes, that point is on your curve,"
+          a real math checker evaluates it.</p>
+      </div>
+      <div class="card">
+        <h3>Teachers see the thinking</h3>
+        <p>Every session is logged. The teacher view replays the graph and chat step by step, so you can see
+          where a student got stuck and how they got out of it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How a session goes</h2>
+    <ol class="steps">
+      <li>The student picks a problem. Each one comes with starter expressions, sometimes including a hidden
+        target curve.</li>
+      <li>They work in Desmos as usual: type equations, drag sliders. The tutor sees each change.</li>
+      <li>When they ask for help, or (if you turn on nudges) sit idle too long, the tutor asks one short question tied to what's on their graph.</li>
+      <li>It checks their work against the misconceptions listed for the problem, and offers the next hint only when
+        they've earned it.</li>
+      <li>When they solve it, the session is marked solved, and the whole path is saved for the teacher.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Student data stays home</h2>
+    <p class="sub">By default every model call goes to a model on your own machine or network: llama.cpp, Ollama,
+      vLLM, LM Studio, or anything else that speaks the OpenAI chat API. There are no cloud APIs, no telemetry,
+      and no analytics.</p>
+    <p class="note">Cloud presets are included for development with fake students only. Point it at an outside
+      provider and demo mode turns on by itself: a warning banner appears and nicknames are auto-generated, so no
+      real names get typed in.</p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Run it locally</h2>
+    <p class="sub">You need Node.js and a local model server that supports tool calling (for example,
+      <code>llama-server --jinja</code> or Ollama with a Qwen 3 model).</p>
+    <pre>git clone https://github.com/killercatfish/desmos-tutor.git
+cd desmos-tutor
+npm install
+npm run dev</pre>
+    <p>Open <code>http://127.0.0.1:5173</code> for the student view and <code>/teacher</code> for the replay view.
+      Set <code>LLM_BASE_URL</code> and <code>LLM_MODEL</code> in <code>.env</code> to point at your model.
+      To add problems, drop JSON files in <code>problems/</code>. The tutor's teaching policy is plain text in
+      <code>prompts/tutor_system.md</code>, and you can edit it while the app runs.</p>
+    <p class="note">This is v0.1, an early experiment. The test suite passes, but the tutor's prompts are still being
+      tuned against real models. The teacher view has no login, so the server binds to localhost only. Issues and
+      pull requests are welcome.</p>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    MIT licensed · <a href="https://github.com/killercatfish/desmos-tutor">github.com/killercatfish/desmos-tutor</a> ·
+    Desmos is a trademark of Desmos Studio PBC. This project is not affiliated with Desmos.
+  </footer>
+</div>
+</body>
+</html>

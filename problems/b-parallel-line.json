@@ -1,0 +1,22 @@
+{
+  "id": "b-parallel-line",
+  "title": "A parallel line through a point",
+  "statement": "Make a line that is parallel to y = 2x + 1 and passes through the point (3, 4).",
+  "goal": "Student writes y = 2x - 2 (or y - 4 = 2(x - 3)) and explains that parallel lines share a slope, so the slope is 2, and the intercept comes from making (3, 4) satisfy the equation.",
+  "common_misconceptions": [
+    "Using the negative reciprocal slope (-1/2), which gives a perpendicular line",
+    "Keeping the intercept 1 as well as the slope, so the line is the same as the original",
+    "Swapping x and y when substituting the point: 3 = 2(4) + b",
+    "Thinking parallel lines must have the same y-intercept"
+  ],
+  "hint_ladder": [
+    "Ask what 'parallel' means for two lines on the graph, and what feature of the equation controls steepness.",
+    "Ask which number in y = 2x + 1 is the slope and whether a parallel line can have a different one.",
+    "Plot the point (3, 4) as a tutor point and ask whether their line goes through it.",
+    "Suggest a slider b in y = 2x + b and ask which b puts the line through (3, 4).",
+    "Ask them to substitute x = 3, y = 4 into y = 2x + b and solve for b."
+  ],
+  "starter_expressions": [
+    { "id": "tutor_given", "latex": "y=2x+1", "owner": "tutor", "color": "#2d70b3", "readonly": true }
+  ]
+}

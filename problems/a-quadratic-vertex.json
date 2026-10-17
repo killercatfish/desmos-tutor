@@ -1,0 +1,21 @@
+{
+  "id": "a-quadratic-vertex",
+  "title": "Quadratic from a vertex and a point",
+  "statement": "Find a quadratic whose vertex is at (2, -3) and that passes through the point (0, 5). Graph it to check.",
+  "goal": "Student writes y = 2(x-2)^2 - 3 (or an equivalent form such as y = 2x^2 - 8x + 5) and can explain that vertex form y = a(x-h)^2 + k places the vertex at (h, k), then that substituting (0, 5) gives 5 = 4a - 3, so a = 2.",
+  "common_misconceptions": [
+    "Sign error on h: writing (x+2) for a vertex at x = 2",
+    "Forgetting the stretch factor a, i.e. assuming a = 1, so the curve misses (0, 5)",
+    "Putting k inside the square: (x-2-3)^2",
+    "Solving for a with an arithmetic slip: 5 = 4a + 3, or (0-2)^2 = -4",
+    "Thinking a negative a is needed because the vertex y-value is negative"
+  ],
+  "hint_ladder": [
+    "Ask what information a vertex gives you, and whether they know a form of a quadratic that shows the vertex directly.",
+    "Point them to vertex form y = a(x-h)^2 + k and ask which numbers in it the vertex (2, -3) tells them.",
+    "Plot the vertex (2, -3) and the point (0, 5) as tutor points so they can see both targets, then ask what has to change to make the curve hit (0, 5).",
+    "Suggest they turn a into a slider and watch which value makes the curve pass through (0, 5).",
+    "Ask them to substitute x = 0 and y = 5 into y = a(0-2)^2 - 3 and solve for a."
+  ],
+  "starter_expressions": []
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tutor Sessions</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/teacher.css" />
+  </head>
+  <body>
+    <header id="topbar">
+      <div class="problem">
+        <h1>Tutor sessions</h1>
+        <p>Read-only. Pick a session to see how the student's thinking moved.</p>
+      </div>
+      <div class="session-info"><a href="/">Student view</a></div>
+    </header>
+    <main id="teacher">
+      <nav id="session-list" aria-label="Sessions"></nav>
+      <section id="detail">
+        <p class="muted" id="detail-empty">No session selected.</p>
+        <div id="detail-body" hidden>
+          <div id="summary"></div>
+          <div id="replay">
+            <div id="replay-calc"></div>
+            <div class="replay-controls">
+              <input id="replay-slider" type="range" min="0" max="0" value="0" />
+              <span id="replay-label"></span>
+            </div>
+          </div>
+          <div id="skills"></div>
+          <ol id="timeline"></ol>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/teacher.ts"></script>
+  </body>
+</html>

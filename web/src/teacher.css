@@ -1,0 +1,36 @@
+#teacher { flex: 1; display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 0; }
+#session-list { border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; }
+#session-list button { display: block; width: 100%; text-align: left; background: none; color: var(--ink); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 14px; }
+#session-list button.active { background: var(--tutor-bg); }
+#session-list .name { font-weight: 600; }
+#session-list .meta { color: var(--muted); font-size: 0.82rem; }
+#detail { overflow-y: auto; padding: 16px 20px; display: block; }
+#detail-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); grid-template-areas: 'summary summary' 'replay timeline' 'skills timeline'; gap: 16px; align-items: start; }
+#summary { grid-area: summary; }
+#summary h2 { margin: 0 0 4px; font-size: 1.1rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; }
+.stat b { display: block; font-size: 1rem; }
+#replay { grid-area: replay; position: sticky; top: 0; }
+#replay-calc { height: 440px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.replay-controls { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+#replay-slider { flex: 1; }
+#replay-label { font-size: 0.85rem; color: var(--muted); min-width: 120px; text-align: right; }
+#skills { grid-area: skills; }
+#skills table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+#skills td, #skills th { border-bottom: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+#timeline { grid-area: timeline; list-style: none; margin: 0; padding: 0; font-size: 0.86rem; }
+#timeline li { padding: 6px 8px; border-left: 3px solid var(--line); margin-bottom: 4px; cursor: pointer; background: var(--panel); border-radius: 0 6px 6px 0; }
+#timeline li.current { outline: 2px solid var(--accent); }
+#timeline li.future { opacity: 0.45; }
+#timeline .when { color: var(--muted); font-size: 0.75rem; margin-right: 6px; }
+#timeline li.graph { border-left-color: #c74440; }
+#timeline li.student_message { border-left-color: #388c46; }
+#timeline li.tutor_message { border-left-color: var(--accent); }
+#timeline li.hint { border-left-color: #fa7e19; }
+#timeline li.skill, #timeline li.solved { border-left-color: #6042a6; }
+#timeline li.tool_call, #timeline li.nudge, #timeline li.error { border-left-color: #999; color: var(--muted); }
+#timeline .kind { font-weight: 600; margin-right: 4px; }
+.status-secure { color: #2b7a3a; font-weight: 600; }
+.status-developing { color: #a86b00; font-weight: 600; }
+.status-emerging { color: #a1271d; font-weight: 600; }

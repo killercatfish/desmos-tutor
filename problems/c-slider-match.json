@@ -1,0 +1,26 @@
+{
+  "id": "c-slider-match",
+  "title": "Match the target parabola",
+  "statement": "The dashed curve is a target parabola. Move the sliders a, h and k in y = a(x-h)^2 + k until your parabola sits exactly on top of the target.",
+  "goal": "Student finds a = -0.5, h = -1, k = 4 and can say what each slider does: h shifts left/right (opposite the sign seen in (x-h)), k shifts up/down, a sets direction and width.",
+  "common_misconceptions": [
+    "Expecting h to move the curve in the direction of the sign shown inside the parentheses",
+    "Thinking a only changes width and not direction (missing that negative a flips it)",
+    "Matching the vertex but not the width, or matching one side only",
+    "Confusing k with the y-intercept"
+  ],
+  "hint_ladder": [
+    "Ask which slider they think moves the curve up and down, and have them test it.",
+    "Ask them to find the target's vertex by looking at the graph and compare it to their own vertex.",
+    "Plot the target's vertex (-1, 4) as a tutor point and ask which sliders move their vertex onto it.",
+    "Ask what happens to the curve when a is negative versus positive, then what happens as |a| gets smaller.",
+    "Plot a second target point such as (1, 2) and ask which a makes their curve pass through it."
+  ],
+  "starter_expressions": [
+    { "id": "tutor_target", "latex": "y=-0.5\\left(x+1\\right)^{2}+4", "owner": "tutor", "color": "#6b6b6b", "lineStyle": "DASHED", "secret": true, "readonly": true },
+    { "id": "s_curve", "latex": "y=a\\left(x-h\\right)^{2}+k", "owner": "student", "color": "#c74440" },
+    { "id": "s_a", "latex": "a=1", "owner": "student", "sliderBounds": { "min": "-5", "max": "5", "step": "0.5" } },
+    { "id": "s_h", "latex": "h=0", "owner": "student", "sliderBounds": { "min": "-10", "max": "10", "step": "0.5" } },
+    { "id": "s_k", "latex": "k=0", "owner": "student", "sliderBounds": { "min": "-10", "max": "10", "step": "0.5" } }
+  ]
+}

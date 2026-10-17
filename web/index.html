@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Desmos Tutor</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="demo-banner" class="banner" hidden>Demo mode — don't type your real name or personal info</div>
+    <header id="topbar">
+      <div class="problem">
+        <h1 id="problem-title">Desmos Tutor</h1>
+        <p id="problem-statement">Start a session to get a problem.</p>
+      </div>
+      <div class="session-info">
+        <span id="nickname-chip" class="chip" hidden></span>
+        <button id="new-session" type="button">New session</button>
+      </div>
+    </header>
+    <main id="workspace">
+      <div id="calculator"></div>
+      <aside id="chat">
+        <div id="messages" aria-live="polite"></div>
+        <form id="chat-form" autocomplete="off">
+          <textarea id="chat-input" rows="2" placeholder="Ask the tutor, or tell it what you're thinking…" disabled></textarea>
+          <button id="chat-send" type="submit" disabled>Send</button>
+        </form>
+      </aside>
+    </main>
+
+    <dialog id="start-dialog">
+      <form method="dialog" id="start-form">
+        <h2>New session</h2>
+        <label>Problem
+          <select id="problem-select"></select>
+        </label>
+        <label id="nickname-row">Nickname
+          <input id="nickname-input" maxlength="40" placeholder="Pick a nickname (not your full name)" />
+        </label>
+        <p id="nickname-demo" class="muted" hidden>In demo mode you get a random nickname.</p>
+        <button id="google-signin" type="button" disabled hidden title="Not available in v0.1">Sign in with Google</button>
+        <menu>
+          <button value="cancel" formnovalidate>Cancel</button>
+          <button id="start-button" value="start">Start</button>
+        </menu>
+      </form>
+    </dialog>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
