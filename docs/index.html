@@ -215,9 +215,20 @@ npm run dev</pre>
       Set <code>LLM_BASE_URL</code> and <code>LLM_MODEL</code> in <code>.env</code> to point at your model.
       To add problems, drop JSON files in <code>problems/</code>. The tutor's teaching policy is plain text in
       <code>prompts/tutor_system.md</code>, and you can edit it while the app runs.</p>
-    <p class="note">This is v0.1, an early experiment. The test suite passes, but the tutor's prompts are still being
-      tuned against real models. The teacher view has no login, so the server binds to localhost only. Issues and
-      pull requests are welcome.</p>
+    <p class="note"><strong>Status: untested with a real model.</strong> This is v0.1, an early experiment. The app,
+      the graph guard and the math checker are covered by 80 passing tests, but so far the tutor has only been run
+      against a fake model server. Nobody knows yet how well real local models follow the Socratic rules. The
+      teacher view has no login, so the server binds to localhost only.</p>
+    <h3>Help wanted</h3>
+    <p>Contributions are welcome, especially:</p>
+    <ul>
+      <li>Run <code>npm run simulate -- --verbose</code> against your local model and share the transcript in an
+        issue. Does it leak answers? Ask one question at a time?</li>
+      <li>Improvements to the teaching policy in <code>prompts/tutor_system.md</code>.</li>
+      <li>New problems in <code>problems/</code>, from algebra through calculus.</li>
+      <li>Bug reports and pull requests of any size.</li>
+    </ul>
+    <p><a class="btn primary" href="https://github.com/killercatfish/desmos-tutor/issues">Open an issue</a></p>
   </div>
 </section>
 

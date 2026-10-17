@@ -9,6 +9,10 @@ It's built for the hard problems, the ones where a stuck student reaches for an 
 tutor makes working through the problem yourself the faster path. **Project page:**
 https://killercatfish.github.io/desmos-tutor/
 
+> **Status: untested with a real model.** The app, guard and math checker pass 80 tests, but the tutor
+> has only been run against a fake model server. If you try it with a local model, please share what
+> happens. See [Contributing](#contributing).
+
 By default every model call goes to a model running on your own machine or network. There are
 no cloud APIs, no telemetry, and no analytics.
 
@@ -153,6 +157,17 @@ prompts/     tutor_system.md, the editable Socratic policy
 scripts/     simulate.ts, ensure-env.ts
 test/        vitest
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. The most useful things right now:
+
+- Run `npm run simulate -- --verbose` against your local model and post the transcript in an issue,
+  noting the model and server you used. Answer leaks and multi-question turns are the main things to
+  watch for.
+- Improve the teaching policy in `prompts/tutor_system.md`.
+- Add problems in `problems/` (format above).
+- Report bugs, or send fixes of any size. Run `npm test` and `npm run typecheck` before a PR.
 
 ## License
 
