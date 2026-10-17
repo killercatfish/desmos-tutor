@@ -158,6 +158,25 @@ scripts/     simulate.ts, ensure-env.ts
 test/        vitest
 ```
 
+## Roadmap
+
+Rough order, nothing promised.
+
+1. **Test against real local models.** Run the simulate script against several models, tune
+   `prompts/tutor_system.md` from the transcripts, and record which models follow the rules.
+2. **Step checking.** Desmos is a visual tool, not a symbolic one. It can't factor, expand, solve for
+   a variable, or tell you whether an algebra step is valid. Language models are unreliable at that
+   too, so the tutor shouldn't judge a step on its own. The plan is a `check_equivalent` tool that
+   compares both sides of a step (like `2(x+3) = 2x+6`) at many random points with the existing
+   mathjs checker, so the tutor never calls a wrong step right.
+3. **A symbolic engine, if needed.** For antiderivatives, limits and solving, a local SymPy sidecar
+   behind the same tool interface. It runs on your own hardware, like everything else.
+4. **Statistics.** Desmos covers descriptive stats and regressions. Full inference workflows (tests,
+   intervals, simulation) would need a backend such as SciPy.
+
+**Design rule for anything grade-related:** reward growth, never penalize asking for help. If
+hints cost points, students stop asking the tutor and go back to answer machines.
+
 ## Contributing
 
 Issues and pull requests are welcome. The most useful things right now:
