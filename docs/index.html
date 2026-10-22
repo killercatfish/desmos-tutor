@@ -42,6 +42,8 @@
   .lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 28px; }
   .actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
+  .video { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+
   /* the sample exchange */
   .demo { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
   .demo-bar { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }
@@ -133,6 +135,16 @@
     </figure>
   </div>
 </div>
+
+<section id="demo">
+  <div class="wrap">
+    <h2>Watch it work</h2>
+    <p class="sub">A two-minute run on a local model (Qwen3.8 27B). The student is scripted; every tutor reply is
+      live. Waits for the model are cut.</p>
+    <video class="video" src="demo.mp4" poster="demo-poster.jpg" controls preload="none" playsinline
+      aria-label="A student works through a vertex problem with the tutor, then the teacher view replays the session"></video>
+  </div>
+</section>
 
 <section>
   <div class="wrap">

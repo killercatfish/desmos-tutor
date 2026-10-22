@@ -9,6 +9,10 @@ It's built for the hard problems, the ones where a stuck student reaches for an 
 tutor makes working through the problem yourself the faster path. **Project page:**
 https://killercatfish.github.io/desmos-tutor/
 
+[![A two-minute demo: a student works through a vertex problem with the tutor, then the teacher view replays it](docs/demo-poster.jpg)](https://killercatfish.github.io/desmos-tutor/#demo)
+
+**[Watch the two-minute demo](https://killercatfish.github.io/desmos-tutor/#demo)** ([or download the video](docs/demo.mp4))
+
 > **Status: early.** The tutor has run against one real model so far (Qwen3.8 27B, Q4_K_M, under
 > llama.cpp) with a simulated student, and passed: it refused the answer three ways, plotted the vertex
 > when the student was stuck, checked the student's point with a tool, and asked for an explanation
