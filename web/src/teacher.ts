@@ -126,7 +126,8 @@ async function showSession(id: string): Promise<void> {
       stat('hint levels used', hints.length ? hints.join(', ') : 'none'),
       stat('student messages', String(events.filter((e) => e.kind === 'student_message').length)),
       stat('graph changes', String(events.filter((e) => e.kind === 'graph').length)),
-      stat('model', s.model || '?'),
+      // Just the model name: the endpoint address (a home or school network) shows on hover only.
+      Object.assign(stat('model', s.model.split(' @ ')[0] || '?'), { title: s.model }),
     ),
   );
 

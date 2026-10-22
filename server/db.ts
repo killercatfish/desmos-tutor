@@ -151,6 +151,7 @@ export class TutorDb {
       solved: row.solved_at !== null,
       state: { expressions: [] },
       recentDiffs: [],
+      skills: {},
       chat: [],
       editsSinceTutor: 0,
       lastActivity: row.last_event_at,
@@ -163,6 +164,7 @@ export class TutorDb {
         for (const t of e.payload.text as string[]) s.recentDiffs.push({ ts: e.ts, text: t, owner: '' });
       } else if (e.kind === 'student_message') s.chat.push({ role: 'student', text: e.payload.text, ts: e.ts });
       else if (e.kind === 'tutor_message') s.chat.push({ role: 'tutor', text: e.payload.text, ts: e.ts });
+      else if (e.kind === 'skill') s.skills[e.payload.skill] = e.payload.status;
     }
     s.recentDiffs = s.recentDiffs.slice(-30);
     s.chat = s.chat.slice(-40);

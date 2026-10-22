@@ -40,6 +40,8 @@ export interface LlmRequest {
   /** Short task name for the X-HKOS-Requester header, e.g. "tutor" or "simulate". */
   task: string;
   signal?: AbortSignal;
+  /** Extra request fields for this request only, on top of LLM_EXTRA_BODY. */
+  extraBody?: Record<string, unknown>;
 }
 
 export interface LlmClient {
@@ -184,6 +186,7 @@ class OpenAICompatClient implements LlmClient {
       temperature: this.cfg.temperature,
       max_tokens: this.cfg.maxTokens,
       ...this.extraBody,
+      ...req.extraBody,
     };
     if (native) {
       body.tools = req.tools!.map((t) => ({ type: 'function', function: t }));

@@ -36,7 +36,7 @@ describe('API', () => {
         { type: 'done', finishReason: 'tool_calls' },
       ],
       [
-        { type: 'text', text: 'Your curve misses (0, 5). ' },
+        { type: 'text', text: 'Your curve misses (0, 5). What could change that?' },
         { type: 'tool_call', call: { id: 'b', name: 'advance_hint_level', args: { reason: 'tried a=1' }, rawArgs: '' } },
         { type: 'tool_call', call: { id: 'c', name: 'add_tutor_expression', args: { latex: '(2,-3)', label: 'vertex' }, rawArgs: '' } },
         { type: 'done', finishReason: 'tool_calls' },

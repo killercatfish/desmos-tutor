@@ -20,6 +20,8 @@ export interface LiveSession {
   state: CompactState;
   /** Recent graph changes, newest last, as plain-language lines. */
   recentDiffs: { ts: number; text: string; owner: string }[];
+  /** Skills recorded with mark_progress so far: name -> latest status. Shown to the model so it reuses names. */
+  skills: Record<string, string>;
   chat: ChatMessage[];
   /** Student edits since the tutor last spoke (drives the "3 edits, no progress" nudge). */
   editsSinceTutor: number;
@@ -45,6 +47,7 @@ export class SessionStore {
       solved: false,
       state: { expressions: [] },
       recentDiffs: [],
+      skills: {},
       chat: [],
       editsSinceTutor: 0,
       lastActivity: now,

@@ -228,6 +228,7 @@ export function createToolHost(locked: (s: LiveSession) => Set<string>, rec: Too
         if (!skill || !SKILL_STATUSES.includes(status as (typeof SKILL_STATUSES)[number])) {
           return { error: `skill and status (${SKILL_STATUSES.join('|')}) are required` };
         }
+        s.skills[skill] = status!;
         rec.skill?.(s, skill, status!, evidence);
         emit({ type: 'progress', skill, status: status!, evidence });
         return { ok: true };

@@ -23,6 +23,8 @@ export interface TurnDeps {
   signal?: AbortSignal;
   /** Called when a model reply had no text and no tool calls (for the event log). */
   onEmpty?: (info: { round: number; finishReason: string | null; retried: boolean }) => void;
+  /** Extra request fields for the retry after an empty reply (e.g. thinking off, so it can't run out again). */
+  retryExtraBody?: Record<string, unknown>;
 }
 
 /** Sent once when a reply comes back empty, e.g. a thinking model that used its whole budget thinking. */
@@ -81,6 +83,8 @@ export function buildSystemPrompt(policy: string, s: LiveSession, locked: Set<st
     s.hintLevel === 0
       ? 'Hint level 0: no hints unlocked yet. Diagnose first.'
       : `Hint level ${s.hintLevel} of ${p.hint_ladder.length}. Use hints up to the CURRENT one; later ones are locked until you call advance_hint_level.`,
+    '## Skills recorded so far (reuse these exact names when they fit)',
+    Object.keys(s.skills).length ? Object.entries(s.skills).map(([k, v]) => `- ${k}: ${v}`).join('\n') : '- (none yet)',
     '## The student\'s graph right now',
     describeGraph(s, locked),
     '## Recent graph changes (oldest first)',
@@ -115,12 +119,14 @@ export async function runTutorTurn(s: LiveSession, trigger: Trigger, deps: TurnD
   const tools = deps.tools.specs();
   let visible = '';
   let retried = false;
+  let extended = false;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let roundText = '';
     let finishReason: string | null = null;
     const calls: ToolCall[] = [];
-    for await (const ev of deps.llm.stream({ messages, tools, task: deps.task ?? 'tutor', signal: deps.signal })) {
+    const extraBody = retried ? deps.retryExtraBody : undefined;
+    for await (const ev of deps.llm.stream({ messages, tools, task: deps.task ?? 'tutor', signal: deps.signal, extraBody })) {
       if (ev.type === 'text') {
         roundText += ev.text;
         emit({ type: 'token', text: ev.text });
@@ -147,8 +153,13 @@ export async function runTutorTurn(s: LiveSession, trigger: Trigger, deps: TurnD
       const result = await deps.tools.execute(s, call, emit);
       messages.push({ role: 'tool', tool_call_id: call.id, name: call.name, content: JSON.stringify(result) });
     }
-    // If the model already wrote to the student and only did bookkeeping, don't make it talk again.
-    if (roundText.trim() && calls.every((c) => QUIET_TOOLS.has(c.name))) break;
+    // If the model already wrote to the student and only did bookkeeping, don't make it talk again,
+    // unless the text stopped short of a question ("Sorry, let me add it again."): then it gets one
+    // more round to finish.
+    if (roundText.trim() && calls.every((c) => QUIET_TOOLS.has(c.name))) {
+      if (/\?\s*$/.test(roundText.trim()) || extended || s.solved) break;
+      extended = true;
+    }
   }
   return visible.trim();
 }

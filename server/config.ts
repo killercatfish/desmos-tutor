@@ -7,6 +7,13 @@ function bool(v: string | undefined, fallback: boolean): boolean {
   return ['1', 'true', 'yes', 'on'].includes(v.trim().toLowerCase());
 }
 
+function jsonObject(v: string | undefined, name: string): Record<string, unknown> | undefined {
+  if (!v?.trim()) return undefined;
+  const o = JSON.parse(v);
+  if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error(`${name} must be a JSON object`);
+  return o;
+}
+
 function num(v: string | undefined, fallback: number): number {
   const n = Number(v);
   return v !== undefined && v.trim() !== '' && Number.isFinite(n) ? n : fallback;
@@ -27,6 +34,8 @@ export interface Config {
     toolMode: 'auto' | 'native' | 'json';
     /** 'auto' streams and falls back to one-shot replies if the endpoint can't stream. */
     stream: 'auto' | 'true' | 'false';
+    /** Extra request fields for the one retry after an empty reply, e.g. thinking off (LLM_RETRY_EXTRA_BODY). */
+    retryExtraBody?: Record<string, unknown>;
     temperature: number;
     maxTokens: number;
     isPrivate: boolean;
@@ -58,6 +67,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       apiKey: env.LLM_API_KEY || undefined,
       toolMode: ['auto', 'native', 'json'].includes(toolMode) ? toolMode : 'auto',
       stream: ['auto', 'true', 'false'].includes(stream) ? stream : 'auto',
+      retryExtraBody: jsonObject(env.LLM_RETRY_EXTRA_BODY, 'LLM_RETRY_EXTRA_BODY'),
       temperature: num(env.LLM_TEMPERATURE, 0.4),
       maxTokens: num(env.LLM_MAX_TOKENS, 1024),
       isPrivate,

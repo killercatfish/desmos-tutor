@@ -56,3 +56,57 @@ describe('empty model replies', () => {
     expect(empties).toHaveLength(2);
   });
 });
+
+describe('replies that stop short of a question', () => {
+  it('get one more round after a cue, and no more', async () => {
+    const s = new SessionStore().create(problems.get('a-quadratic-vertex')!, 'test');
+    s.chat.push({ role: 'student', text: "i can't see it", ts: Date.now() });
+    let calls = 0;
+    const llm: LlmClient = {
+      describe: 'fake',
+      toolMode: () => 'native',
+      async *stream(): AsyncGenerator<LlmEvent> {
+        calls++;
+        yield { type: 'text', text: calls === 1 ? 'Sorry, let me add it again.' : 'Still no question.' };
+        yield { type: 'tool_call', call: { id: `c${calls}`, name: 'add_tutor_expression', args: { latex: `(2,-${calls})` }, rawArgs: '' } };
+        yield { type: 'done', finishReason: 'tool_calls' };
+      },
+    };
+    const text = await runTutorTurn(
+      s,
+      { kind: 'chat', text: "i can't see it" },
+      { llm, tools: createToolHost(() => new Set()), promptPath: resolve(root, 'prompts/tutor_system.md') },
+      () => {},
+      new Set(),
+    );
+    expect(calls).toBe(2);
+    expect(text).toBe('Sorry, let me add it again. Still no question.');
+  });
+});
+
+describe('the retry after an empty reply', () => {
+  it('sends the retry-only request fields, and only on the retry', async () => {
+    const s = new SessionStore().create(problems.get('a-quadratic-vertex')!, 'test');
+    s.chat.push({ role: 'student', text: 'hi', ts: Date.now() });
+    const seen: unknown[] = [];
+    const llm: LlmClient = {
+      describe: 'fake',
+      toolMode: () => 'native',
+      async *stream({ extraBody }): AsyncGenerator<LlmEvent> {
+        seen.push(extraBody);
+        if (seen.length === 2) yield { type: 'text', text: 'What do you notice?' };
+        yield { type: 'done', finishReason: seen.length === 1 ? 'length' : 'stop' };
+      },
+    };
+    const off = { chat_template_kwargs: { enable_thinking: false } };
+    const text = await runTutorTurn(
+      s,
+      { kind: 'chat', text: 'hi' },
+      { llm, tools: createToolHost(() => new Set()), promptPath: resolve(root, 'prompts/tutor_system.md'), retryExtraBody: off },
+      () => {},
+      new Set(),
+    );
+    expect(text).toBe('What do you notice?');
+    expect(seen).toEqual([undefined, off]);
+  });
+});
