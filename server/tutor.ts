@@ -21,7 +21,12 @@ export interface TurnDeps {
   /** Short task label for the model-server request headers. */
   task?: string;
   signal?: AbortSignal;
+  /** Called when a model reply had no text and no tool calls (for the event log). */
+  onEmpty?: (info: { round: number; finishReason: string | null; retried: boolean }) => void;
 }
+
+/** Sent once when a reply comes back empty, e.g. a thinking model that used its whole budget thinking. */
+const SPEAK_NOW = '(Note from the app, not the student: your last reply reached the student empty. Reply to the student now, in 1-3 sentences, ending with one question.)';
 
 const MAX_TOOL_ROUNDS = 5;
 const CHAT_HISTORY = 14;
@@ -109,9 +114,11 @@ export async function runTutorTurn(s: LiveSession, trigger: Trigger, deps: TurnD
   const messages = buildMessages(policy, s, trigger, locked);
   const tools = deps.tools.specs();
   let visible = '';
+  let retried = false;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let roundText = '';
+    let finishReason: string | null = null;
     const calls: ToolCall[] = [];
     for await (const ev of deps.llm.stream({ messages, tools, task: deps.task ?? 'tutor', signal: deps.signal })) {
       if (ev.type === 'text') {
@@ -121,8 +128,18 @@ export async function runTutorTurn(s: LiveSession, trigger: Trigger, deps: TurnD
         roundText = '';
         emit({ type: 'reset' });
       } else if (ev.type === 'tool_call') calls.push(ev.call);
+      else if (ev.type === 'done') finishReason = ev.finishReason;
     }
     if (roundText) visible += (visible ? ' ' : '') + roundText.trim();
+    if (calls.length === 0 && !roundText.trim()) {
+      deps.onEmpty?.({ round, finishReason, retried });
+      if (!visible && !retried) {
+        // Ask once more rather than leave the student with silence.
+        retried = true;
+        messages.push({ role: 'user', content: SPEAK_NOW });
+        continue;
+      }
+    }
     if (calls.length === 0) break;
 
     messages.push({ role: 'assistant', content: roundText, tool_calls: calls });

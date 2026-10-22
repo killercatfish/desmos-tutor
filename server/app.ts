@@ -105,7 +105,7 @@ export function buildApp(config: Config, opts: { llm?: LlmClient; tools?: ToolHo
         if (CLIENT_EVENTS.has(e.type) && !reply.raw.writableEnded) reply.raw.write(`data: ${JSON.stringify(e)}\n\n`);
       };
       try {
-        const text = await runTutorTurn(s, trigger, { llm, tools, promptPath, signal: abort.signal }, emit, lockedIds(s.problem));
+        const text = await runTutorTurn(s, trigger, { llm, tools, promptPath, signal: abort.signal, onEmpty: (info) => db.event(s.id, 'empty_reply', info) }, emit, lockedIds(s.problem));
         if (text) {
           addChat(s, 'tutor', text);
           db.event(s.id, 'tutor_message', { text });

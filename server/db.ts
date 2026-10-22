@@ -17,6 +17,7 @@ export type EventKind =
   | 'hint'
   | 'skill'
   | 'solved'
+  | 'empty_reply'
   | 'error';
 
 export interface EventRow {

@@ -97,6 +97,8 @@ function describe(e: EventRow): [string, string] {
       return [`Tool ${p.name}`, `${JSON.stringify(p.args)} → ${JSON.stringify(p.result)}`];
     case 'error':
       return ['Error', p.message];
+    case 'empty_reply':
+      return ['Empty reply', `model stopped with no text (${p.finishReason ?? 'no reason given'})${p.retried ? ', already retried' : ', asking again'}`];
     default:
       return [e.kind, JSON.stringify(p)];
   }
