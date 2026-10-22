@@ -55,6 +55,7 @@ export function createLlmClient(cfg: Config['llm'], env: NodeJS.ProcessEnv = pro
 
 class OpenAICompatClient implements LlmClient {
   private mode: 'native' | 'json';
+  private streaming: boolean;
   private extraBody: Record<string, unknown> = {};
 
   constructor(
@@ -62,6 +63,7 @@ class OpenAICompatClient implements LlmClient {
     private env: NodeJS.ProcessEnv,
   ) {
     this.mode = cfg.toolMode === 'json' ? 'json' : 'native';
+    this.streaming = cfg.stream !== 'false';
     if (env.LLM_EXTRA_BODY) {
       try {
         this.extraBody = JSON.parse(env.LLM_EXTRA_BODY);
@@ -92,22 +94,32 @@ class OpenAICompatClient implements LlmClient {
   }
 
   async *stream(req: LlmRequest): AsyncGenerator<LlmEvent> {
-    const useNative = this.mode === 'native' && (req.tools?.length ?? 0) > 0;
-    let res = await this.post(req, useNative);
-    if (!res.ok && useNative && this.cfg.toolMode === 'auto') {
+    let useNative = this.mode === 'native' && (req.tools?.length ?? 0) > 0;
+    let res = await this.post(req, useNative, this.streaming);
+    for (let attempt = 0; !res.ok && attempt < 2; attempt++) {
       const body = await res.text();
-      // The endpoint refused function calling (llama.cpp without --jinja says so, for example):
-      // switch to JSON tool blocks for the rest of this process.
-      if (/tool|function|jinja/i.test(body)) {
+      if (useNative && this.cfg.toolMode === 'auto' && /tool|function|jinja/i.test(body)) {
+        // The endpoint refused function calling (llama.cpp without --jinja says so, for example):
+        // switch to JSON tool blocks for the rest of this process.
         console.warn(`[llm] native tool calls refused (${res.status}: ${body.slice(0, 160)}); using JSON tool blocks`);
         this.mode = 'json';
-        res = await this.post(req, false);
+        useNative = false;
+      } else if (this.streaming && this.cfg.stream === 'auto') {
+        // Some proxies only do one-shot replies (a proxy that parses the upstream body as one
+        // JSON object, so a stream comes back as a 502): stop streaming for the rest of this process.
+        console.warn(`[llm] streaming failed (${res.status}: ${body.slice(0, 160)}); using one-shot replies`);
+        this.streaming = false;
       } else {
         throw new Error(`LLM request failed: ${res.status} ${body.slice(0, 300)}`);
       }
+      res = await this.post(req, useNative, this.streaming);
     }
     if (!res.ok || !res.body) {
       throw new Error(`LLM request failed: ${res.status} ${(await res.text()).slice(0, 300)}`);
+    }
+    if (!this.streaming) {
+      yield* oneShotEvents(await res.json());
+      return;
     }
 
     const filter = new StreamFilter();
@@ -164,11 +176,11 @@ class OpenAICompatClient implements LlmClient {
     yield { type: 'done', finishReason };
   }
 
-  private post(req: LlmRequest, native: boolean): Promise<Response> {
+  private post(req: LlmRequest, native: boolean, stream: boolean): Promise<Response> {
     const body: Record<string, unknown> = {
       model: this.cfg.model,
       messages: native ? toNativeMessages(req.messages) : toJsonModeMessages(req.messages, req.tools ?? []),
-      stream: true,
+      stream,
       temperature: this.cfg.temperature,
       max_tokens: this.cfg.maxTokens,
       ...this.extraBody,
@@ -184,6 +196,35 @@ class OpenAICompatClient implements LlmClient {
       signal: req.signal,
     });
   }
+}
+
+/** Turns a non-streamed chat completion into the same events a stream would give. */
+export function* oneShotEvents(data: any): Generator<LlmEvent> {
+  if (data?.error) throw new Error(`LLM error: ${JSON.stringify(data.error).slice(0, 300)}`);
+  const choice = data?.choices?.[0] ?? {};
+  const msg = choice.message ?? {};
+  const filter = new StreamFilter();
+  let textCallN = 0;
+  const outs = [...(typeof msg.content === 'string' ? filter.push(msg.content) : []), ...filter.end()];
+  for (const o of outs) {
+    if (o.type === 'text') yield { type: 'text', text: o.text };
+    else if (o.type === 'reset') yield { type: 'reset' };
+    else {
+      const parsed = parseToolText(o.raw);
+      if (parsed) yield { type: 'tool_call', call: { id: `text_${++textCallN}`, name: parsed.name, args: parsed.args, rawArgs: JSON.stringify(parsed.args) } };
+    }
+  }
+  for (const [idx, tc] of (msg.tool_calls ?? []).entries()) {
+    const raw = typeof tc.function?.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function?.arguments ?? {});
+    let args: unknown;
+    try {
+      args = raw.trim() ? JSON.parse(raw) : {};
+    } catch {
+      args = undefined;
+    }
+    yield { type: 'tool_call', call: { id: tc.id || `call_${idx}`, name: tc.function?.name ?? '', args, rawArgs: raw } };
+  }
+  yield { type: 'done', finishReason: choice.finish_reason ?? null };
 }
 
 function toNativeMessages(msgs: ChatMsg[]): unknown[] {

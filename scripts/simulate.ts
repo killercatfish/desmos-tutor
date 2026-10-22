@@ -79,7 +79,7 @@ const tools = createToolHost(() => locked, {
   hint: (s, level, reason) => db.hint(s.id, level, reason),
   skill: (s, skill, status, evidence) => db.skill(s.id, skill, status, evidence),
   solved: (s, evidence) => db.solved(s.id, evidence),
-});
+}, { sympyUrl: config.sympyUrl });
 
 const s: LiveSession = new SessionStore().create(problem, 'Simulated Student');
 db.createSession(s, config.providerTrainsOnData, llm.describe);

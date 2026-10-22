@@ -261,3 +261,113 @@ export function checkPoint(latex: string, x: number, y: number, scope: Scope = {
 function close(a: number, b: number): boolean {
   return Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(a), Math.abs(b));
 }
+
+// ---- Step checking ---------------------------------------------------------------------------
+// Desmos can't say whether an algebra step is valid, and models are unreliable at it, so the
+// tutor checks steps here: both sides are evaluated at many random values of every variable.
+
+const RESERVED = new Set([...Object.values(FUNCTIONS), 'nthRoot', 'pi', 'tau', 'e']);
+
+function variablesOf(src: string): string[] {
+  const names = new Set<string>();
+  math.parse(src).traverse((node) => {
+    if ((node as { isSymbolNode?: boolean }).isSymbolNode) {
+      const name = (node as unknown as { name: string }).name;
+      if (!RESERVED.has(name)) names.add(name);
+    }
+  });
+  return [...names].sort();
+}
+
+export interface EquivalenceCheck {
+  equivalent: boolean;
+  /** 'expressions' compares two expressions; 'equations' compares solution sets; 'identity' checks one equation holds everywhere. */
+  kind: 'expressions' | 'equations' | 'identity';
+  variables: string[];
+  /** Values where the two sides disagree, for the tutor's own reasoning (never for the student). */
+  counterexample?: Record<string, number>;
+  samples: number;
+}
+
+const SAMPLES = 40;
+
+/** Deterministic pseudo-random values, so a check gives the same answer every time. */
+function sampler(seed = 7): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) % 2147483648;
+    return Math.round(((s / 2147483648) * 9 - 4.3) * 1000) / 1000; // in [-4.3, 4.7), avoids 0 and small integers mostly
+  };
+}
+
+function sides(latex: string): [string, string] | null {
+  const eq = splitEquation(latex);
+  return eq ? [latexToMathjs(eq[0]), latexToMathjs(eq[1])] : null;
+}
+
+/**
+ * Is `a` equivalent to `b`?
+ * - two expressions: equal for every value of the variables (2(x+3) vs 2x+6)
+ * - two equations: same solutions, i.e. (left - right) of one is a nonzero constant times the other's
+ *   (2(x+3)=10 vs x+3=5); squaring both sides or dividing by a variable is reported as not equivalent
+ * - one equation and no `b`: the equation holds for every value (2(x+3)=2x+6)
+ */
+export function checkEquivalent(a: string, b?: string): EquivalenceCheck {
+  const ea = sides(a);
+  const eb = b === undefined ? null : sides(b);
+  let kind: EquivalenceCheck['kind'];
+  let f: string;
+  let g: string;
+  if (b === undefined) {
+    if (!ea) throw new LatexError('Give two expressions, two equations, or one equation to test as an identity');
+    kind = 'identity';
+    [f, g] = ea;
+  } else if (!ea && !eb) {
+    kind = 'expressions';
+    f = latexToMathjs(a);
+    g = latexToMathjs(b);
+  } else if (ea && eb) {
+    kind = 'equations';
+    f = `(${ea[0]})-(${ea[1]})`;
+    g = `(${eb[0]})-(${eb[1]})`;
+  } else {
+    throw new LatexError('Compare an equation with an equation, or an expression with an expression');
+  }
+
+  const variables = [...new Set([...variablesOf(f), ...variablesOf(g)])].sort();
+  const cf = compile(f);
+  const cg = compile(g);
+  const next = sampler();
+  let ratio: number | undefined;
+  let samples = 0;
+  for (let tries = 0; tries < SAMPLES * 5 && samples < SAMPLES; tries++) {
+    const scope: Scope = {};
+    for (const v of variables) scope[v] = next();
+    let fv: number;
+    let gv: number;
+    try {
+      fv = cf(scope);
+      gv = cg(scope);
+    } catch {
+      continue; // outside the domain (sqrt of a negative, division by zero): try other values
+    }
+    if (!Number.isFinite(fv) || !Number.isFinite(gv)) continue;
+    samples++;
+    let ok: boolean;
+    if (kind === 'equations') {
+      // Same solution set when f = r*g for one nonzero constant r.
+      if (Math.abs(fv) < 1e-9 && Math.abs(gv) < 1e-9) ok = true;
+      else if (Math.abs(gv) < 1e-9 || Math.abs(fv) < 1e-9) ok = false;
+      else {
+        const r = fv / gv;
+        if (ratio === undefined) ratio = r;
+        ok = close(r, ratio);
+      }
+    } else {
+      ok = close(fv, gv);
+    }
+    if (!ok) return { equivalent: false, kind, variables, counterexample: scope, samples };
+  }
+  if (samples < 5) throw new LatexError('Could not find enough values where both sides are defined');
+  return { equivalent: true, kind, variables, samples };
+}

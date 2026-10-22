@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LatexError, checkPoint, evaluateAt, latexToMathjs } from '../server/math.ts';
+import { LatexError, checkEquivalent, checkPoint, evaluateAt, latexToMathjs } from '../server/math.ts';
 
 describe('latexToMathjs', () => {
   it.each([
@@ -83,5 +83,38 @@ describe('checkPoint', () => {
   it('checks a parallel line through (3, 4)', () => {
     expect(checkPoint('y=2x-2', 3, 4).on_curve).toBe(true);
     expect(checkPoint('y=2x+1', 3, 4).on_curve).toBe(false);
+  });
+});
+
+describe('checkEquivalent', () => {
+  it('accepts a correct expansion and rejects a common mistake', () => {
+    expect(checkEquivalent('2\\left(x+3\\right)', '2x+6').equivalent).toBe(true);
+    const bad = checkEquivalent('2\\left(x+3\\right)', '2x+3');
+    expect(bad.equivalent).toBe(false);
+    expect(bad.counterexample).toHaveProperty('x');
+  });
+
+  it('checks a single equation as an identity', () => {
+    expect(checkEquivalent('2\\left(x+3\\right)=2x+6').kind).toBe('identity');
+    expect(checkEquivalent('2\\left(x+3\\right)=2x+6').equivalent).toBe(true);
+    expect(checkEquivalent('\\left(x+y\\right)^{2}=x^{2}+y^{2}').equivalent).toBe(false);
+  });
+
+  it('treats equations as equivalent when they have the same solutions', () => {
+    expect(checkEquivalent('2\\left(x+3\\right)=10', 'x+3=5').equivalent).toBe(true);
+    expect(checkEquivalent('2\\left(x+3\\right)=10', 'x=2').equivalent).toBe(true);
+    expect(checkEquivalent('2\\left(x+3\\right)=10', 'x=4').equivalent).toBe(false);
+    // dividing by x loses the solution x = 0
+    expect(checkEquivalent('x^{2}=3x', 'x=3').equivalent).toBe(false);
+  });
+
+  it('handles fractions, roots and several variables', () => {
+    expect(checkEquivalent('\\frac{x^{2}-1}{x-1}', 'x+1').equivalent).toBe(true);
+    expect(checkEquivalent('\\sqrt{x^{2}}', 'x').equivalent).toBe(false);
+    expect(checkEquivalent('a\\left(x-h\\right)^{2}+k', 'ax^{2}-2ahx+ah^{2}+k').equivalent).toBe(true);
+  });
+
+  it('refuses to compare an equation with an expression', () => {
+    expect(() => checkEquivalent('x+1=2', 'x+1')).toThrow(LatexError);
   });
 });

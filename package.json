@@ -7,12 +7,15 @@
   "description": "Socratic tutor that watches a Desmos graph and guides the student with questions. Local model by default.",
   "scripts": {
     "predev": "tsx scripts/ensure-env.ts",
-    "dev": "concurrently -n server,web -c blue,magenta \"tsx watch server/index.ts\" \"vite\"",
+    "dev": "concurrently -n server,web,sympy -c blue,magenta,green \"tsx watch server/index.ts\" \"vite\" \"tsx scripts/sympy.ts\"",
     "build": "vite build",
     "start": "tsx server/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "simulate": "tsx scripts/simulate.ts"
+    "simulate": "tsx scripts/simulate.ts",
+    "sympy": "tsx scripts/sympy.ts",
+    "sympy:setup": "tsx scripts/sympy.ts --setup",
+    "test:sidecar": "cd sidecar && .venv/bin/python -m unittest test_sympy_server"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",

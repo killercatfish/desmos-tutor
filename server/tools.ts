@@ -6,7 +6,8 @@ import { assertActionAllowed, GuardError, isTutorId, TUTOR_PREFIX } from '../sha
 import { ownerOf } from '../shared/diff.ts';
 import type { TurnEvent, TutorAction } from '../shared/types.ts';
 import type { ToolCall, ToolSpec } from './llm.ts';
-import { checkPoint, evaluateAt, LatexError, type Scope } from './math.ts';
+import { checkEquivalent, checkPoint, evaluateAt, LatexError, type Scope } from './math.ts';
+import { symbolic, SYMBOLIC_OPS, type SymbolicOp } from './symbolic.ts';
 import type { LiveSession } from './sessions.ts';
 import type { ToolHost } from './tutor.ts';
 
@@ -81,7 +82,38 @@ export const TOOL_SPECS: ToolSpec[] = [
     description: 'Evaluate y at a given x for a curve y = f(x). Use instead of doing arithmetic yourself.',
     parameters: { type: 'object', properties: { ...exprRef, x: { type: 'number' } }, required: ['x'] },
   },
+  {
+    name: 'check_equivalent',
+    description:
+      "Check whether a student's algebra step is valid. Give two expressions (\"2\\left(x+3\\right)\" and \"2x+6\"), two equations (same solutions?), or one equation to test as an identity. Use this before telling a student a step is right or wrong; never judge a step yourself.",
+    parameters: {
+      type: 'object',
+      properties: {
+        before: { type: 'string', description: 'LaTeX: the expression or equation before the step (or one equation alone)' },
+        after: { type: 'string', description: 'LaTeX: the expression or equation after the step (optional)' },
+      },
+      required: ['before'],
+    },
+  },
 ];
+
+const SYMBOLIC_SPEC: ToolSpec = {
+  name: 'symbolic',
+  description:
+    'Exact symbolic math for YOUR reasoning only: solve, factor, expand, simplify, derivative, integral, limit. Never paste the result to the student; use it to decide which question to ask next.',
+  parameters: {
+    type: 'object',
+    properties: {
+      op: { type: 'string', enum: [...SYMBOLIC_OPS] },
+      latex: { type: 'string', description: 'LaTeX expression, or an equation for solve, e.g. "2x^{2}-8x+5=0"' },
+      variable: { type: 'string', description: 'Variable to solve for / differentiate by (default x)' },
+      at: { type: 'string', description: 'For limit: the value approached, e.g. "0" or "infinity"' },
+      from: { type: 'string', description: 'For a definite integral: lower bound' },
+      to: { type: 'string', description: 'For a definite integral: upper bound' },
+    },
+    required: ['op', 'latex'],
+  },
+};
 
 /** Hooks for recording what happened (the event log, skill marks, solved status). */
 export interface ToolRecorder {
@@ -109,7 +141,14 @@ export function sliderScope(s: LiveSession): Scope {
   return scope;
 }
 
-export function createToolHost(locked: (s: LiveSession) => Set<string>, rec: ToolRecorder = {}): ToolHost {
+export interface ToolOptions {
+  /** SymPy sidecar URL; when empty the `symbolic` tool is not offered. */
+  sympyUrl?: string;
+}
+
+export function createToolHost(locked: (s: LiveSession) => Set<string>, rec: ToolRecorder = {}, opts: ToolOptions = {}): ToolHost {
+  const specs = opts.sympyUrl ? [...TOOL_SPECS, SYMBOLIC_SPEC] : TOOL_SPECS;
+
   async function run(s: LiveSession, call: ToolCall, emit: (e: TurnEvent) => void): Promise<unknown> {
     const a = (call.args ?? {}) as Record<string, unknown>;
     if (call.args === undefined) return { error: 'Arguments were not valid JSON' };
@@ -215,13 +254,35 @@ export function createToolHost(locked: (s: LiveSession) => Set<string>, rec: Too
           throw e;
         }
       }
+      case 'check_equivalent': {
+        const before = str(a.before);
+        if (!before) return { error: 'before is required' };
+        try {
+          return checkEquivalent(before, str(a.after));
+        } catch (e) {
+          if (e instanceof LatexError) return { error: e.message };
+          throw e;
+        }
+      }
+      case 'symbolic': {
+        if (!opts.sympyUrl) return { error: `Unknown tool "${call.name}"` };
+        const op = str(a.op)?.toLowerCase() as SymbolicOp | undefined;
+        const latex = str(a.latex);
+        if (!op || !SYMBOLIC_OPS.includes(op) || !latex) return { error: `op (${SYMBOLIC_OPS.join('|')}) and latex are required` };
+        try {
+          return await symbolic(opts.sympyUrl, { op, latex, variable: str(a.variable, 20), at: str(a.at, 60), from: str(a.from, 60), to: str(a.to, 60) });
+        } catch (e) {
+          if (e instanceof LatexError) return { error: e.message };
+          throw e;
+        }
+      }
       default:
         return { error: `Unknown tool "${call.name}"` };
     }
   }
 
   return {
-    specs: () => TOOL_SPECS,
+    specs: () => specs,
     async execute(s, call, emit) {
       let result: unknown;
       try {

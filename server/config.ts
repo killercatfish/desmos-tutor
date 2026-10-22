@@ -25,11 +25,15 @@ export interface Config {
     apiKey?: string;
     /** 'auto' tries native tool calling and falls back to JSON blocks if the endpoint refuses. */
     toolMode: 'auto' | 'native' | 'json';
+    /** 'auto' streams and falls back to one-shot replies if the endpoint can't stream. */
+    stream: 'auto' | 'true' | 'false';
     temperature: number;
     maxTokens: number;
     isPrivate: boolean;
   };
   providerTrainsOnData: boolean;
+  /** SymPy sidecar for the `symbolic` tool; empty turns the tool off. */
+  sympyUrl: string;
   nudgesEnabled: boolean;
   idleNudgeSeconds: number;
   googleSignIn: boolean;
@@ -40,6 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const baseUrl = (env.LLM_BASE_URL || 'http://localhost:8080/v1').replace(/\/+$/, '');
   const isPrivate = isPrivateUrl(baseUrl);
   const toolMode = (env.LLM_TOOL_MODE || 'auto') as Config['llm']['toolMode'];
+  const stream = (env.LLM_STREAM || 'auto').trim().toLowerCase() as Config['llm']['stream'];
   return {
     root,
     host: env.HOST || '127.0.0.1',
@@ -52,12 +57,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       model: env.LLM_MODEL || 'qwen27b',
       apiKey: env.LLM_API_KEY || undefined,
       toolMode: ['auto', 'native', 'json'].includes(toolMode) ? toolMode : 'auto',
+      stream: ['auto', 'true', 'false'].includes(stream) ? stream : 'auto',
       temperature: num(env.LLM_TEMPERATURE, 0.4),
       maxTokens: num(env.LLM_MAX_TOKENS, 1024),
       isPrivate,
     },
     // Default: assume a non-private endpoint trains on our data. Explicit env wins.
     providerTrainsOnData: bool(env.PROVIDER_TRAINS_ON_DATA, !isPrivate),
+    sympyUrl: env.SYMPY_URL === undefined ? 'http://127.0.0.1:3002' : env.SYMPY_URL.trim(),
     nudgesEnabled: bool(env.NUDGES_ENABLED, false),
     idleNudgeSeconds: num(env.IDLE_NUDGE_SECONDS, 90),
     googleSignIn: bool(env.FEATURE_GOOGLE_SIGNIN, false),

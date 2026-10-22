@@ -9,9 +9,11 @@ It's built for the hard problems, the ones where a stuck student reaches for an 
 tutor makes working through the problem yourself the faster path. **Project page:**
 https://killercatfish.github.io/desmos-tutor/
 
-> **Status: untested with a real model.** The app, guard and math checker pass 80 tests, but the tutor
-> has only been run against a fake model server. If you try it with a local model, please share what
-> happens. See [Contributing](#contributing).
+> **Status: early.** The tutor has run against one real model so far (Qwen3.8 27B, Q4_K_M, under
+> llama.cpp) with a simulated student, and passed: it refused the answer three ways, plotted the vertex
+> when the student was stuck, checked the student's point with a tool, and asked for an explanation
+> before confirming. It has not been used by real students. If you try it with your own model, please
+> share what happens. See [Contributing](#contributing).
 
 By default every model call goes to a model running on your own machine or network. There are
 no cloud APIs, no telemetry, and no analytics.
@@ -58,6 +60,10 @@ to force the fallback, or `native` to turn it off.
 **Thinking models.** `<think>…</think>` text is stripped before the student sees anything. To turn
 thinking off on servers that support it, pass extra request fields with, for example,
 `LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}`.
+
+**Proxies that can't stream.** With `LLM_STREAM=auto` (the default) the app streams replies, and if
+the endpoint or a proxy in front of it fails on a streamed request, it switches to one-shot replies
+for the rest of the run. Set `LLM_STREAM=false` to skip the failed first try.
 
 **Request labels.** For private-network endpoints, every request carries
 `X-HKOS-Requester: desmos-tutor.tutor` (or `.simulate`) and `X-HKOS-Trace`. These headers are
@@ -110,6 +116,30 @@ Problems live in `problems/*.json`:
 Starters with `"owner": "tutor"` are locked: the tutor can't remove them either. `secret` hides the
 equation in the expression list, so the student only sees the curve.
 
+## Math tools
+
+Desmos is a visual tool, not a symbolic one, and language models are unreliable at algebra. So the
+tutor never judges math on its own; it calls tools and keeps the results to itself.
+
+- **`check_point_on_expression`, `evaluate`**: exact values on the student's curves, with their slider values.
+- **`check_equivalent`**: is an algebra step valid? It compares two expressions (`2(x+3)` vs `2x+6`),
+  two equations (same solutions? `2(x+3)=10` vs `x+3=5`), or tests one equation as an identity, by
+  evaluating at many values of every variable. Dividing by a variable or squaring both sides shows up as
+  not equivalent. Runs in the server; nothing to install.
+- **`symbolic`** (optional): solve, factor, expand, simplify, derivative, integral and limit, from a
+  small local SymPy service in `sidecar/`. The prompt tells the tutor to use the result only to plan its
+  next question, never to paste it to the student.
+
+```sh
+npm run sympy:setup   # once: creates sidecar/.venv and installs SymPy (needs Python 3.10+)
+npm run dev           # starts the sidecar too, when it's set up
+```
+
+The sidecar listens on `127.0.0.1` only. It never receives LaTeX: the server converts LaTeX to plain
+math text first, and the sidecar rejects anything outside that small alphabet before SymPy parses it,
+because SymPy's parser evaluates code. Each operation runs in a child process that is killed after 5 s.
+Set `SYMPY_URL=` (empty) to turn the tool off.
+
 ## How the tutor can (and can't) touch the graph
 
 The tutor can add, remove and highlight **only expressions whose id starts with `tutor_`.** The code
@@ -138,23 +168,28 @@ plotted the vertex when the student got stuck.
 | `NUDGES_ENABLED` | `false` | Tutor speaks up after `IDLE_NUDGE_SECONDS` (90) idle, or after 3+ edits without chat. |
 | `FEATURE_GOOGLE_SIGNIN` | `false` | Stub only in v0.1. |
 | `LLM_TEMPERATURE` / `LLM_MAX_TOKENS` | `0.4` / `1024` | |
+| `LLM_STREAM` | `auto` | `true`, `false`, or `auto` (stream, fall back to one-shot replies). |
+| `SYMPY_URL` | `http://127.0.0.1:3002` | SymPy sidecar for the `symbolic` tool; empty turns it off. |
 
 ## Scripts
 
 `npm run dev` · `npm test` · `npm run typecheck` · `npm run build` then `npm start` (serves the
-built frontend from the API server) · `npm run simulate`
+built frontend from the API server) · `npm run simulate` · `npm run sympy:setup` · `npm run sympy` ·
+`npm run test:sidecar`
 
 ## Layout
 
 ```
 server/      Fastify API: app.ts (routes), llm.ts (the only model client), tutor.ts (turn loop),
-             tools.ts (tool specs + guard), math.ts (LaTeX → mathjs checker), db.ts (SQLite),
-             config.ts, privacy.ts, auth/google.ts (stub)
+             tools.ts (tool specs + guard), math.ts (LaTeX → mathjs checker, step checking),
+             symbolic.ts (SymPy sidecar client), db.ts (SQLite), config.ts, privacy.ts,
+             auth/google.ts (stub)
+sidecar/     sympy_server.py: optional local SymPy service, and its tests
 shared/      Used by server and browser: types, graph diff, tutor-id guard
 web/         Vite frontend: index.html (student), teacher.html (timeline + replay)
 problems/    Problem files
 prompts/     tutor_system.md, the editable Socratic policy
-scripts/     simulate.ts, ensure-env.ts
+scripts/     simulate.ts, ensure-env.ts, sympy.ts
 test/        vitest
 ```
 
@@ -162,15 +197,12 @@ test/        vitest
 
 Rough order, nothing promised.
 
-1. **Test against real local models.** Run the simulate script against several models, tune
-   `prompts/tutor_system.md` from the transcripts, and record which models follow the rules.
-2. **Step checking.** Desmos is a visual tool, not a symbolic one. It can't factor, expand, solve for
-   a variable, or tell you whether an algebra step is valid. Language models are unreliable at that
-   too, so the tutor shouldn't judge a step on its own. The plan is a `check_equivalent` tool that
-   compares both sides of a step (like `2(x+3) = 2x+6`) at many random points with the existing
-   mathjs checker, so the tutor never calls a wrong step right.
-3. **A symbolic engine, if needed.** For antiderivatives, limits and solving, a local SymPy sidecar
-   behind the same tool interface. It runs on your own hardware, like everything else.
+1. **Test against more local models.** One model has passed the simulated student so far. Run the
+   simulate script against others, tune `prompts/tutor_system.md` from the transcripts, and record
+   which models follow the rules. Problems that need the new math tools need simulate scripts too.
+2. ~~Step checking~~ and ~~a symbolic engine~~: done, see [Math tools](#math-tools).
+3. **GeoGebra where Desmos falls short.** Geometry constructions and a visible CAS, without making
+   students pick a tool: the problem or the tutor decides, and the student's work carries over.
 4. **Statistics.** Desmos covers descriptive stats and regressions. Full inference workflows (tests,
    intervals, simulation) would need a backend such as SciPy.
 

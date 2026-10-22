@@ -29,7 +29,7 @@ export function buildApp(config: Config, opts: { llm?: LlmClient; tools?: ToolHo
       hint: (s, level, reason) => db.hint(s.id, level, reason),
       skill: (s, skill, status, evidence) => db.skill(s.id, skill, status, evidence),
       solved: (s, evidence) => db.solved(s.id, evidence),
-    });
+    }, { sympyUrl: config.sympyUrl });
   const promptPath = resolve(config.root, 'prompts/tutor_system.md');
 
   /** Live session, reloaded from the log if the server restarted since it began. */

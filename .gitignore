@@ -5,3 +5,5 @@ data/*.db
 data/*.db-*
 .wrap-log.md
 new-features.md
+sidecar/.venv/
+__pycache__/
