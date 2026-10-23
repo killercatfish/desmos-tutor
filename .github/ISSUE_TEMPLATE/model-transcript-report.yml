@@ -1,0 +1,59 @@
+name: Model transcript report
+description: Share how the tutor behaved on your local model.
+title: "Transcript: <model> on <server>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing! Run `npm run simulate -- --verbose` against your model and paste the output below.
+        **Simulated students only.** Please don't paste real student names or work.
+  - type: input
+    id: model
+    attributes:
+      label: Model name and quant
+      placeholder: "e.g. Qwen3 32B, Q4_K_M"
+    validations:
+      required: true
+  - type: dropdown
+    id: server
+    attributes:
+      label: Server
+      options:
+        - Ollama
+        - llama.cpp
+        - vLLM
+        - LM Studio
+        - Other (say which in the notes)
+    validations:
+      required: true
+  - type: dropdown
+    id: leaked
+    attributes:
+      label: Did it leak the answer?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: true
+  - type: dropdown
+    id: one-question
+    attributes:
+      label: Did it ask one question at a time?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - type: textarea
+    id: transcript
+    attributes:
+      label: Transcript
+      description: The full output of `npm run simulate -- --verbose`.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else, like settings in `.env` (no keys), turn times, or thinking on or off.

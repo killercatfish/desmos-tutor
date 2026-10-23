@@ -207,7 +207,10 @@ Rough order, nothing promised.
 2. ~~Step checking~~ and ~~a symbolic engine~~: done, see [Math tools](#math-tools).
 3. **GeoGebra where Desmos falls short.** Geometry constructions and a visible CAS, without making
    students pick a tool: the problem or the tutor decides, and the student's work carries over.
-4. **Statistics.** Desmos covers descriptive stats and regressions. Full inference workflows (tests,
+4. **A coding environment.** The same tutor beside a code editor instead of a graph, for intro
+   programming: it reads the student's code and test output, asks one question at a time, and never
+   writes the fix. Comes after GeoGebra.
+5. **Statistics.** Desmos covers descriptive stats and regressions. Full inference workflows (tests,
    intervals, simulation) would need a backend such as SciPy.
 
 **Design rule for anything grade-related:** reward growth, never penalize asking for help. If
@@ -217,9 +220,10 @@ hints cost points, students stop asking the tutor and go back to answer machines
 
 Issues and pull requests are welcome. The most useful things right now:
 
-- Run `npm run simulate -- --verbose` against your local model and post the transcript in an issue,
-  noting the model and server you used. Answer leaks and multi-question turns are the main things to
-  watch for.
+- Run `npm run simulate -- --verbose` against your local model and post the transcript with a
+  [model transcript report](https://github.com/killercatfish/desmos-tutor/issues/new?template=model-transcript-report.yml).
+  It asks for the model, the server, and whether the tutor leaked the answer or asked more than one
+  question at a time.
 - Improve the teaching policy in `prompts/tutor_system.md`.
 - Add problems in `problems/` (format above).
 - Report bugs, or send fixes of any size. Run `npm test` and `npm run typecheck` before a PR.

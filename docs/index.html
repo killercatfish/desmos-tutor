@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Socratic Desmos Tutor</title>
 <meta name="description" content="An open-source math tutor that sits beside a Desmos graph and helps students work through hard problems with questions, not answers. Runs on a local model.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Socratic Desmos Tutor">
+<meta property="og:title" content="Socratic Desmos Tutor: a tutor for the hard problems. It won't do them for you.">
+<meta property="og:description" content="An open-source math tutor that sits beside a Desmos graph and asks one good question at a time, never the answer. Runs on a model on your own machine.">
+<meta property="og:url" content="https://killercatfish.github.io/desmos-tutor/">
+<meta property="og:image" content="https://killercatfish.github.io/desmos-tutor/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="A Desmos-style graph of a downward parabola with the vertex (2, −3) circled, and a tutor asking: Your parabola opens down. Does (0, 5) sit above or below the vertex?">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Socratic Desmos Tutor: a tutor for the hard problems. It won't do them for you.">
+<meta name="twitter:description" content="An open-source math tutor that sits beside a Desmos graph and asks one good question at a time, never the answer. Runs on a model on your own machine.">
+<meta name="twitter:image" content="https://killercatfish.github.io/desmos-tutor/og-image.png">
+<link rel="canonical" href="https://killercatfish.github.io/desmos-tutor/">
 <style>
   :root {
     --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1f24; --muted: #5d636e; --line: #e4e1da;
@@ -227,20 +241,26 @@ npm run dev</pre>
       Set <code>LLM_BASE_URL</code> and <code>LLM_MODEL</code> in <code>.env</code> to point at your model.
       To add problems, drop JSON files in <code>problems/</code>. The tutor's teaching policy is plain text in
       <code>prompts/tutor_system.md</code>, and you can edit it while the app runs.</p>
-    <p class="note"><strong>Status: untested with a real model.</strong> This is v0.1, an early experiment. The app,
-      the graph guard and the math checker are covered by 80 passing tests, but so far the tutor has only been run
-      against a fake model server. Nobody knows yet how well real local models follow the Socratic rules. The
-      teacher view has no login, so the server binds to localhost only.</p>
+    <p class="note"><strong>Status: v0.1, early real-model runs.</strong> The tutor has run on one local model so far,
+      Qwen3.8 27B (Q4_K_M, under llama.cpp), with a simulated student, and passed: it refused the answer three ways,
+      plotted the vertex when the student was stuck, and checked the student's point with a tool. One model is not
+      enough. It needs broader testing across models, and it has not been used by real students yet. The app, the
+      graph guard and the math checkers are covered by 99 passing tests. The teacher view has no login, so the
+      server binds to localhost only.</p>
     <h3>Help wanted</h3>
     <p>Contributions are welcome, especially:</p>
     <ul>
-      <li>Run <code>npm run simulate -- --verbose</code> against your local model and share the transcript in an
-        issue. Does it leak answers? Ask one question at a time?</li>
+      <li>Run <code>npm run simulate -- --verbose</code> against your local model and share the transcript with a
+        <a href="https://github.com/killercatfish/desmos-tutor/issues/new?template=model-transcript-report.yml">model
+        transcript report</a>. Does it leak answers? Ask one question at a time?</li>
       <li>Improvements to the teaching policy in <code>prompts/tutor_system.md</code>.</li>
       <li>New problems in <code>problems/</code>, from algebra through calculus.</li>
       <li>Bug reports and pull requests of any size.</li>
     </ul>
-    <p><a class="btn primary" href="https://github.com/killercatfish/desmos-tutor/issues">Open an issue</a></p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/killercatfish/desmos-tutor/issues/new?template=model-transcript-report.yml">Report a model transcript</a>
+      <a class="btn" href="https://github.com/killercatfish/desmos-tutor/issues">Open an issue</a>
+    </div>
   </div>
 </section>
 
