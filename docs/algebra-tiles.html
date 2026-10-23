@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algebra Tiles Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=STIX+Two+Text:ital,wght@0,500;1,500&display=swap">
+<style>
+/* Layout: classroom work mat on graph paper. Lessons = stage (mat) + step panel; practice mat below. */
+:root{
+  --bg:#eaeef3; --surface:#fbfcfd; --mat:#f4f7fa; --ink:#16212e; --muted:#5b6b7c;
+  --line:#cfd8e2; --line-strong:#9aa9b9; --grid:rgba(40,70,110,.09);
+  --x2:#3e6fd6; --x2e:#2851a8; --xg:#2e9a68; --xe:#1d7149;
+  --one:#f0b429; --onee:#b88310; --onelab:#3b2a00;
+  --neg:#de4239; --nege:#a52c25; --lab:#ffffff; --hl:#7a4ddb;
+  --btn:#16212e; --btn-ink:#ffffff;
+  --font-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-math:"STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --U:24px; --X:78px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151c; --surface:#17202a; --mat:#121a23; --ink:#e4ebf3; --muted:#91a2b4;
+    --line:#2a3644; --line-strong:#4a5a6c; --grid:rgba(160,190,230,.07);
+    --x2:#4f7fe3; --x2e:#3561c2; --xg:#35ad76; --xe:#22845a;
+    --one:#f4c04a; --onee:#c9951d; --onelab:#3b2a00;
+    --neg:#e9544b; --nege:#b6372f; --lab:#ffffff; --hl:#a989ff;
+    --btn:#e4ebf3; --btn-ink:#0f151c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --surface:#17202a; --mat:#121a23; --ink:#e4ebf3; --muted:#91a2b4;
+  --line:#2a3644; --line-strong:#4a5a6c; --grid:rgba(160,190,230,.07);
+  --x2:#4f7fe3; --x2e:#3561c2; --xg:#35ad76; --xe:#22845a;
+  --one:#f4c04a; --onee:#c9951d; --onelab:#3b2a00;
+  --neg:#e9544b; --nege:#b6372f; --lab:#ffffff; --hl:#a989ff;
+  --btn:#e4ebf3; --btn-ink:#0f151c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55}
+.wrap{max-width:1060px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:36px 64px;display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.08}
+h1{font-weight:800;font-size:clamp(2.3rem,5.4vw,3.6rem);letter-spacing:-.025em}
+h2{font-weight:800;font-size:1.7rem;letter-spacing:-.015em}
+h3{font-weight:600;font-size:1.25rem}
+p{margin:0}
+i{font-family:var(--font-math);font-style:italic}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;color:var(--muted)}
+
+/* header */
+.top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:end}
+.top .intro{display:flex;flex-direction:column;gap:12px}
+.lede{max-width:56ch;color:var(--muted);font-size:1.05rem}
+.kit{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.kit-row{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.kit-item{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.kit-note{font-size:13px;color:var(--muted)}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+
+/* tiles */
+.tile{position:relative;flex:none;display:grid;place-items:center;width:var(--U);height:var(--U);border:1.5px solid var(--e);background:var(--f);color:var(--l);border-radius:3px;font:500 12px/1 var(--font-math);padding:0;transition:transform .15s ease, opacity .3s ease}
+.tile span{pointer-events:none;white-space:nowrap}
+.tile i{font-size:inherit}
+.k-x2{--f:var(--x2);--e:var(--x2e);--l:var(--lab);width:var(--X);height:var(--X);font-size:15px}
+.k-x{--f:var(--xg);--e:var(--xe);--l:var(--lab);width:var(--U);height:var(--X)}
+.k-1{--f:var(--one);--e:var(--onee);--l:var(--onelab);font-size:11px}
+.tile.neg{--f:var(--neg);--e:var(--nege);--l:var(--lab)}
+button.tile{cursor:pointer;appearance:none;-webkit-appearance:none}
+button.tile:hover{transform:translateY(-2px)}
+button.tile:focus-visible,.btn:focus-visible,.tab:focus-visible,.dot:focus-visible,.add:focus-visible,.seg button:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.st-new{animation:pop .42s cubic-bezier(.2,.9,.3,1.3) both}
+.st-pair{outline:2.5px dashed var(--hl);outline-offset:2px;z-index:2}
+.st-hl{outline:2.5px solid var(--hl);outline-offset:1px;z-index:2}
+.st-ghost{opacity:.16;border-style:dashed;filter:grayscale(.6)}
+.st-vanish{animation:vanish .35s ease forwards}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes vanish{to{transform:scale(.2);opacity:0}}
+.slot{position:absolute;border:1.5px dashed var(--line-strong);border-radius:3px}
+
+/* layouts on the mat */
+.clusters{display:flex;flex-wrap:wrap;gap:18px 22px;align-items:flex-start;justify-content:center}
+.cluster{display:flex;flex-direction:column;gap:6px}
+.trow{display:flex;flex-wrap:wrap;gap:5px;max-width:260px}
+.area{position:relative;flex:none}
+.frame{position:absolute;border:1.5px dashed var(--line-strong);border-radius:2px;pointer-events:none}
+.times{position:absolute;display:grid;place-items:center;color:var(--muted);font:500 16px/1 var(--font-math)}
+.edge{filter:saturate(.8)}
+.area-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.note{font-size:13px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px}
+.note.bad{color:var(--neg);border-color:var(--neg)}
+.note.good{color:var(--xg);border-color:var(--xg)}
+.eqmat{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;width:100%}
+.eqside{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1.5px solid var(--line-strong);border-radius:10px;padding:14px 10px;min-height:150px;background:color-mix(in srgb, var(--surface) 55%, transparent)}
+.eqside .trow{max-width:150px;justify-content:center}
+.eqsign{align-self:center;font:500 2rem/1 var(--font-math);color:var(--muted)}
+.groups{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.group{border:1.5px dashed var(--hl);border-radius:8px;padding:8px}
+
+/* lessons */
+.lessons{display:flex;flex-direction:column;gap:14px}
+.lessons-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.tab{flex:none;font:700 14px/1 var(--font-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer}
+.tab .n{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.tab[aria-selected="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.tab[aria-selected="true"] .n{color:inherit;opacity:.65}
+.lesson{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.paper{background-color:var(--mat);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.stage{min-height:340px;padding:24px 18px;display:flex;align-items:center;justify-content:center;overflow-x:auto;border-right:1px solid var(--line)}
+.stage > *{max-width:100%}
+.panel{padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.stepcount{font-variant-numeric:tabular-nums}
+.cap{min-height:6.5em}
+.cap b{font-weight:700}
+.math{font:500 1.4rem/1.35 var(--font-math);background:var(--bg);border-radius:10px;padding:10px 14px;overflow-x:auto;white-space:nowrap}
+.controls{margin-top:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dots{display:flex;gap:6px;margin-right:auto}
+.dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--line-strong);background:transparent;padding:0;cursor:pointer}
+.dot[aria-current="step"]{background:var(--ink);border-color:var(--ink)}
+.btn{font:700 15px/1 var(--font-body);border-radius:10px;padding:11px 16px;cursor:pointer;border:1.5px solid var(--btn);background:var(--btn);color:var(--btn-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn:disabled{opacity:.35;cursor:default}
+@media (max-width:820px){.lesson{grid-template-columns:1fr}.stage{border-right:0;border-bottom:1px solid var(--line);min-height:280px}.cap{min-height:0}}
+
+/* practice */
+.practice{display:flex;flex-direction:column;gap:14px}
+.practice .sub{color:var(--muted);max-width:60ch}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.addset{display:flex;gap:6px;flex-wrap:wrap}
+.add{display:inline-flex;align-items:center;gap:7px;font:700 14px/1 var(--font-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 10px;cursor:pointer}
+.add:hover{border-color:var(--line-strong)}
+.sw{display:inline-block;border-radius:2px;border:1.5px solid var(--e);background:var(--f)}
+.sw.k-x2{width:16px;height:16px}.sw.k-x{width:7px;height:16px}.sw.k-1{width:8px;height:8px}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+.seg button{font:700 13px/1 var(--font-body);background:transparent;color:var(--ink);border:0;padding:8px 11px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink)}
+.seg-label{font-size:13px;color:var(--muted);margin-right:6px}
+.tools-right{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.btn.sm{font-size:14px;padding:8px 12px;border-radius:9px}
+.pmat{min-height:260px;padding:26px 18px;display:flex;align-items:center;justify-content:center}
+.empty{color:var(--muted);text-align:center;max-width:32ch}
+.readout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.readout > div{padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.readout > div + div{border-left:1px solid var(--line)}
+.readout .math{background:transparent;padding:0;font-size:1.3rem}
+.status{font-size:13px;color:var(--muted);padding:0 16px 14px;min-height:1.6em}
+@media (max-width:620px){.readout{grid-template-columns:1fr}.readout > div + div{border-left:0;border-top:1px solid var(--line)}.tools-right{margin-left:0}}
+
+.foot{color:var(--muted);font-size:14px;max-width:70ch;border-top:1px solid var(--line);padding-top:18px}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition:none !important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="intro">
+      <div class="eyebrow">Interactive manipulatives · Algebra 1</div>
+      <h1>Algebra Tiles Lab</h1>
+      <p class="lede">Step through six worked examples, from building an expression to solving an equation. Then try your own on the practice mat. Red tiles are negative, and a red tile cancels a tile of the same shape.</p>
+    </div>
+    <aside class="kit" aria-label="Tile key">
+      <div class="eyebrow">The tile kit</div>
+      <div class="kit-row" id="kit"></div>
+      <p class="kit-note">Tap a tile to flip it to its negative side.</p>
+    </aside>
+  </header>
+
+  <section class="lessons" aria-labelledby="lessons-h">
+    <div class="lessons-head">
+      <h2 id="lessons-h">Worked examples</h2>
+      <span class="eyebrow">Use ← → keys to step</span>
+    </div>
+    <div class="tabs" role="tablist" id="tabs" aria-label="Examples"></div>
+    <div class="lesson" id="lesson" role="tabpanel">
+      <div class="stage paper" id="stage" aria-live="polite"></div>
+      <div class="panel">
+        <div class="eyebrow stepcount" id="stepcount"></div>
+        <h3 id="extitle"></h3>
+        <p class="cap" id="cap"></p>
+        <div class="math" id="math"></div>
+        <div class="controls">
+          <div class="dots" id="dots"></div>
+          <button class="btn ghost" id="prev" type="button">Back</button>
+          <button class="btn" id="next" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="practice" id="practice" aria-labelledby="practice-h">
+    <h2 id="practice-h">Practice mat</h2>
+    <p class="sub">Add tiles, tap one to flip its sign, then cancel the zero pairs. The mat starts with an example. Try building 3<i>x</i> − 2, adding −<i>x</i> + 5, and simplifying.</p>
+    <div class="pcard">
+      <div class="toolbar">
+        <div class="addset" id="addset" aria-label="Add tiles"></div>
+        <div>
+          <span class="seg-label">Tap a tile to</span>
+          <span class="seg" role="group" aria-label="Tap action">
+            <button type="button" id="m-flip" aria-pressed="true">Flip</button>
+            <button type="button" id="m-remove" aria-pressed="false">Remove</button>
+          </span>
+        </div>
+        <div class="tools-right">
+          <button class="btn sm" type="button" id="zp">Cancel zero pairs</button>
+          <button class="btn sm ghost" type="button" id="clear">Clear mat</button>
+        </div>
+      </div>
+      <div class="pmat paper" id="pmat"></div>
+      <div class="readout">
+        <div><span class="eyebrow">On the mat</span><div class="math" id="raw"></div></div>
+        <div><span class="eyebrow">Simplified</span><div class="math" id="simp"></div></div>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <p class="foot">Why the tile sizes look odd: the long side of an <i>x</i> tile is deliberately not a whole number of unit squares. That way no one can trade an <i>x</i> for a stack of ones, which matches how a variable works.</p>
+</div>
+
+<script>
+(function(){
+const XV='<i>x</i>', SQ='<i>x</i>²';
+const NAMES={x2:'x squared',x:'x','1':'unit'};
+function dims(){return matchMedia('(max-width: 520px)').matches?{U:18,X:58}:{U:24,X:78};}
+function setDims(){const {U,X}=dims();const r=document.documentElement.style;r.setProperty('--U',U+'px');r.setProperty('--X',X+'px');}
+setDims();
+
+function label(k,s){return (s<0?'−':'')+(k==='x2'?SQ:k==='x'?XV:'1');}
+function tile(k,s,state,o={}){
+  const el=document.createElement(o.tag||'div');
+  el.className='tile k-'+k+(s<0?' neg':'')+(state&&state!=='n'?' st-'+state:'')+(o.cls?' '+o.cls:'');
+  el.innerHTML='<span>'+label(k,s)+'</span>';
+  el.setAttribute(o.tag==='button'?'aria-label':'title',(s<0?'negative ':'')+NAMES[k]+' tile');
+  if(o.w!=null){el.style.width=o.w+'px';el.style.height=o.h+'px';}
+  if(o.x!=null){el.style.position='absolute';el.style.left=o.x+'px';el.style.top=o.y+'px';}
+  return el;
+}
+function div(cls){const d=document.createElement('div');d.className=cls;return d;}
+const C=(k,p,n,ps='n',ns='n')=>({k,pos:Array(p).fill(ps),neg:Array(n).fill(ns)});
+const S=(k,pos,neg)=>({k,pos,neg});
+const rep=(st,n)=>Array(n).fill(st);
+
+function clusters(parent,spec){
+  const wrap=div('clusters');
+  for(const c of spec){
+    if(!c.pos.length&&!c.neg.length)continue;
+    const cl=div('cluster');
+    [[c.pos,1],[c.neg,-1]].forEach(([arr,s])=>{
+      if(!arr.length)return;
+      const row=div('trow');arr.forEach(st=>row.append(tile(c.k,s,st)));cl.append(row);
+    });
+    wrap.append(cl);
+  }
+  parent.append(wrap);return wrap;
+}
+
+const T=(t,s=1)=>({t,s});
+function area(parent,top,left,o={}){
+  const {U,X}=dims(),G=6,len=t=>t.t==='x'?X:U;
+  const fill=o.fill||['x2','x','1'];
+  const W=top.reduce((a,t)=>a+len(t),0),H=left.reduce((a,t)=>a+len(t),0);
+  const outer=div('area-wrap');
+  const box=div('area');box.style.width=(U+G+W)+'px';box.style.height=(U+G+H)+'px';
+  const tm=div('times');Object.assign(tm.style,{left:0,top:0,width:U+'px',height:U+'px'});tm.textContent='×';box.append(tm);
+  const fr=div('frame');Object.assign(fr.style,{left:(U+G)+'px',top:(U+G)+'px',width:W+'px',height:H+'px'});box.append(fr);
+  const es=o.edgeHL?'hl':'n';
+  let ax=U+G;top.forEach(t=>{box.append(tile(t.t,t.s,es,{cls:'edge',w:len(t),h:U,x:ax,y:0}));ax+=len(t);});
+  let ay=U+G;left.forEach(t=>{box.append(tile(t.t,t.s,es,{cls:'edge',w:U,h:len(t),x:0,y:ay}));ay+=len(t);});
+  let y=U+G;
+  left.forEach((b,j)=>{
+    let x=U+G;
+    top.forEach((a,i)=>{
+      const nx=(a.t==='x')+(b.t==='x');const k=nx===2?'x2':nx===1?'x':'1';const s=a.s*b.s;
+      const w=len(a),h=len(b);
+      if(k==='1'&&o.emptyOnes){const sl=div('slot');Object.assign(sl.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});box.append(sl);}
+      else if(fill.includes(k)){box.append(tile(k,s,o.state?o.state(k,s,i,j):(o.fresh&&o.fresh.includes(k)?'new':'n'),{w,h,x,y}));}
+      x+=w;
+    });
+    y+=len(b);
+  });
+  outer.append(box);
+  if(o.note){const n=div('note'+(o.noteCls?' '+o.noteCls:''));n.textContent=o.note;outer.append(n);}
+  parent.append(outer);
+}
+
+function eqmat(parent,L,R){
+  const m=div('eqmat');
+  const side=groups=>{const sd=div('eqside');
+    if(groups.length>1){const g=div('groups');groups.forEach(sp=>{const b=div('group');clusters(b,sp);g.append(b);});sd.append(g);}
+    else clusters(sd,groups[0]);
+    return sd;};
+  const eq=div('eqsign');eq.textContent='=';
+  m.append(side(L),eq,side(R));parent.append(m);
+}
+
+/* ---------- examples ---------- */
+const EX=[
+{id:'build',tab:'Build',title:'Build an expression',steps:[
+  {math:`2${SQ}`,cap:`Each big blue square is <b>${SQ}</b>: a square with sides ${XV} by ${XV}. Two of them show 2${SQ}.`,
+   draw:s=>clusters(s,[C('x2',2,0,'new')])},
+  {math:`2${SQ} − 3${XV}`,cap:`Each long green rectangle is <b>${XV}</b>: 1 by ${XV}. Flip it to the red side and it means −${XV}. Three red ones show −3${XV}.`,
+   draw:s=>clusters(s,[C('x2',2,0),C('x',0,3,'n','new')])},
+  {math:`2${SQ} − 3${XV} + 4`,cap:`Each small yellow square is <b>1</b>, a unit. Four of them add +4.`,
+   draw:s=>clusters(s,[C('x2',2,0),C('x',0,3),C('1',4,0,'new')])},
+  {math:`2${SQ} − 3${XV} + 4`,cap:`To read a mat, group tiles by shape, count each group, and keep its color as the sign. Rebuild this one on the practice mat below.`,
+   draw:s=>clusters(s,[C('x2',2,0),C('x',0,3),C('1',4,0)])}
+]},
+{id:'zero',tab:'Zero pairs',title:'Add and combine like terms',steps:[
+  {math:`${SQ} + 3${XV} − 2`,cap:`Start with the first expression on the mat.`,
+   draw:s=>clusters(s,[C('x2',1,0),C('x',3,0),C('1',0,2)])},
+  {math:`(${SQ} + 3${XV} − 2) + (−${SQ} − ${XV} + 5)`,cap:`Add −${SQ} − ${XV} + 5. The new tiles join the tiles of the same shape.`,
+   draw:s=>clusters(s,[C('x2',1,1,'n','new'),C('x',3,1,'n','new'),C('1',5,2,'new','n')])},
+  {math:`(${SQ} + 3${XV} − 2) + (−${SQ} − ${XV} + 5)`,cap:`A positive and a negative tile of the same shape make a <b>zero pair</b>. Together they are worth 0. Here there is one ${SQ} pair, one ${XV} pair, and two unit pairs.`,
+   draw:s=>clusters(s,[S('x2',['pair'],['pair']),S('x',['pair','n','n'],['pair']),S('1',['pair','pair','n','n','n'],['pair','pair'])])},
+  {math:`0 + 2${XV} + 0 + 3`,cap:`Remove the zero pairs. Taking away 0 doesn't change the value.`,
+   draw:s=>clusters(s,[S('x2',['ghost'],['ghost']),S('x',['ghost','n','n'],['ghost']),S('1',['ghost','ghost','n','n','n'],['ghost','ghost'])])},
+  {math:`2${XV} + 3`,cap:`What's left is the sum: <b>2${XV} + 3</b>. The ${SQ} tiles cancelled completely.`,
+   draw:s=>clusters(s,[C('x',2,0),C('1',3,0)])}
+]},
+{id:'multiply',tab:'Multiply',title:'Multiply (x + 2)(x + 3)',steps:[
+  {math:`(${XV} + 2)(${XV} + 3)`,cap:`Lay one factor across the top (${XV} + 3) and the other down the side (${XV} + 2). They are the side lengths of a rectangle. The product is its area.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1'),T('1')],{fill:[]})},
+  {math:`${SQ} + …`,cap:`Where ${XV} meets ${XV}, the tile is ${XV} · ${XV} = <b>${SQ}</b>.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1'),T('1')],{fill:['x2'],fresh:['x2']})},
+  {math:`${SQ} + 3${XV} + 2${XV} + …`,cap:`Where ${XV} meets 1, the tile is an ${XV}. There are 3 along the top row and 2 down the side: 5${XV} in all.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1'),T('1')],{fill:['x2','x'],fresh:['x']})},
+  {math:`(${XV} + 2)(${XV} + 3) = ${SQ} + 5${XV} + 6`,cap:`Where 1 meets 1, the tile is a unit. The corner holds 2 × 3 = 6 of them. Count the whole rectangle: <b>${SQ} + 5${XV} + 6</b>.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1'),T('1')],{fresh:['1']})}
+]},
+{id:'negatives',tab:'Negatives',title:'Multiply (x − 1)(x + 3)',steps:[
+  {math:`(${XV} − 1)(${XV} + 3)`,cap:`A negative term goes on the edge as a red tile. The side here is ${XV} − 1.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1',-1)],{fill:[]})},
+  {math:`${SQ} + 3${XV} − ${XV} − 3`,cap:`Fill each spot using the sign rule. Same signs give a positive tile. Different signs give a red tile. The bottom row is −1 times (${XV} + 3): one −${XV} and three −1s.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1',-1)],{fresh:['x2','x','1']})},
+  {math:`${SQ} + 3${XV} − ${XV} − 3`,cap:`One +${XV} and the −${XV} form a <b>zero pair</b>.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1',-1)],{state:(k,sg,i,j)=>k==='x'&&((i===1&&j===0)||(i===0&&j===1))?'pair':'n'})},
+  {math:`(${XV} − 1)(${XV} + 3) = ${SQ} + 2${XV} − 3`,cap:`Cancel the pair. Two ${XV} tiles are left, so the product is <b>${SQ} + 2${XV} − 3</b>.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1',-1)],{state:(k,sg,i,j)=>k==='x'&&((i===1&&j===0)||(i===0&&j===1))?'ghost':'n'})}
+]},
+{id:'factor',tab:'Factor',title:'Factor x² + 4x + 3',steps:[
+  {math:`${SQ} + 4${XV} + 3`,cap:`Factoring runs multiplication backward. Arrange all of these tiles into one rectangle. Its side lengths are the factors.`,
+   draw:s=>clusters(s,[C('x2',1,0),C('x',4,0),C('1',3,0)])},
+  {math:`${SQ} + 4${XV} + 3`,cap:`Put the ${SQ} tile in the corner first.`,
+   draw:s=>area(s,[T('x')],[T('x')],{fresh:['x2']})},
+  {math:`${SQ} + 4${XV} + 3`,cap:`Try splitting the 4 ${XV} tiles 2 and 2. The corner then needs 2 × 2 = 4 units, but there are only 3. It doesn't fit.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1')],[T('x'),T('1'),T('1')],{emptyOnes:true,fresh:['x'],note:'4 spots, only 3 units',noteCls:'bad'})},
+  {math:`${SQ} + 4${XV} + 3`,cap:`Split them 3 and 1 instead. The corner needs 3 × 1 = 3 units, exactly what we have. The rectangle is complete.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1')],{fresh:['x','1'],note:'3 spots, 3 units',noteCls:'good'})},
+  {math:`${SQ} + 4${XV} + 3 = (${XV} + 1)(${XV} + 3)`,cap:`Read the edges: ${XV} + 3 across the top and ${XV} + 1 down the side. The split that works is the pair of numbers that adds to 4 and multiplies to 3.`,
+   draw:s=>area(s,[T('x'),T('1'),T('1'),T('1')],[T('x'),T('1')],{edgeHL:true})}
+]},
+{id:'solve',tab:'Solve',title:'Solve 2x + 3 = 7',steps:[
+  {math:`2${XV} + 3 = 7`,cap:`Each side of the mat holds one side of the equation. The two sides balance.`,
+   draw:s=>eqmat(s,[[C('x',2,0),C('1',3,0)]],[[C('1',7,0)]])},
+  {math:`2${XV} + 3 + (−3) = 7 + (−3)`,cap:`To get the ${XV} tiles alone, add three −1 tiles to <b>both</b> sides. Doing the same thing to both sides keeps the balance.`,
+   draw:s=>eqmat(s,[[C('x',2,0),C('1',3,3,'n','new')]],[[C('1',7,3,'n','new')]])},
+  {math:`2${XV} + 0 = 4 + 0`,cap:`Each side now has three zero pairs.`,
+   draw:s=>eqmat(s,[[C('x',2,0),C('1',3,3,'pair','pair')]],[[S('1',[...rep('pair',3),...rep('n',4)],rep('pair',3))]])},
+  {math:`2${XV} = 4`,cap:`Remove them. Two ${XV} tiles balance four units.`,
+   draw:s=>eqmat(s,[[C('x',2,0),C('1',3,3,'ghost','ghost')]],[[S('1',[...rep('ghost',3),...rep('n',4)],rep('ghost',3))]])},
+  {math:`${XV} = 2`,cap:`Split each side into 2 equal groups. One ${XV} matches two units, so <b>${XV} = 2</b>. Check: 2(2) + 3 = 7.`,
+   draw:s=>eqmat(s,[[C('x',1,0)],[C('x',1,0)]],[[C('1',2,0)],[C('1',2,0)]])}
+]}
+];
+
+const $=id=>document.getElementById(id);
+const tabsEl=$('tabs'),stage=$('stage');
+let cur=0,step=0;
+EX.forEach((ex,i)=>{
+  const b=document.createElement('button');
+  b.className='tab';b.type='button';b.setAttribute('role','tab');b.id='tab-'+ex.id;
+  b.innerHTML=`<span class="n">${i+1}</span>${ex.tab}`;
+  b.addEventListener('click',()=>select(i));
+  b.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();e.stopPropagation();
+      const n=(i+(e.key==='ArrowRight'?1:-1)+EX.length)%EX.length;select(n);tabsEl.children[n].focus();}
+  });
+  tabsEl.append(b);
+});
+function select(i){cur=i;step=0;
+  [...tabsEl.children].forEach((t,j)=>{t.setAttribute('aria-selected',j===i);t.tabIndex=j===i?0:-1;});
+  $('lesson').setAttribute('aria-labelledby','tab-'+EX[i].id);
+  render();}
+function render(){
+  const ex=EX[cur],st=ex.steps[step];
+  stage.innerHTML='';st.draw(stage);
+  $('stepcount').textContent=`Example ${cur+1} · Step ${step+1} of ${ex.steps.length}`;
+  $('extitle').textContent=ex.title;
+  $('cap').innerHTML=st.cap;$('math').innerHTML=st.math;
+  $('prev').disabled=step===0;
+  $('next').textContent=step===ex.steps.length-1?(cur<EX.length-1?'Next example':'Start over'):'Next';
+  const dots=$('dots');dots.innerHTML='';
+  ex.steps.forEach((_,j)=>{const d=document.createElement('button');d.type='button';d.className='dot';d.setAttribute('aria-label','Step '+(j+1));if(j===step)d.setAttribute('aria-current','step');d.onclick=()=>{step=j;render();};dots.append(d);});
+}
+function next(){const ex=EX[cur];if(step<ex.steps.length-1){step++;render();}else{select((cur+1)%EX.length);}}
+function prev(){if(step>0){step--;render();}}
+$('next').onclick=next;$('prev').onclick=prev;
+document.addEventListener('keydown',e=>{
+  if(e.target.closest&&(e.target.closest('#practice')||e.target.closest('#tabs')))return;
+  if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+  if(e.key==='ArrowRight')next();else if(e.key==='ArrowLeft')prev();
+});
+
+/* ---------- kit ---------- */
+const kit=$('kit');
+[['x2','x²'],['x','x'],['1','1']].forEach(([k])=>{
+  const it=div('kit-item');let s=1;
+  const b=tile(k,1,'n',{tag:'button'});b.type='button';
+  const cap=document.createElement('span');
+  const setCap=()=>{cap.innerHTML=(s<0?'−':'')+(k==='x2'?SQ:k==='x'?XV:'1')+(k==='1'?' (unit)':'');};
+  b.onclick=()=>{s=-s;b.classList.toggle('neg',s<0);b.querySelector('span').innerHTML=label(k,s);b.setAttribute('aria-label',(s<0?'negative ':'')+NAMES[k]+' tile');setCap();};
+  setCap();it.append(b,cap);kit.append(it);
+});
+
+/* ---------- practice mat ---------- */
+let mat=[],nid=0,mode='flip',busy=false;
+const pmat=$('pmat'),status=$('status');
+const ORDER=['x2','x','1'];
+const addset=$('addset');
+[1,-1].forEach(s=>ORDER.forEach(k=>{
+  const b=document.createElement('button');b.type='button';b.className='add';
+  b.innerHTML=`<span class="sw k-${k}${s<0?' neg':''}"></span>${s<0?'−':'+'}${k==='x2'?SQ:k==='x'?XV:'1'}`;
+  b.setAttribute('aria-label',`Add ${s<0?'negative ':''}${NAMES[k]} tile`);
+  b.onclick=()=>{if(busy)return;mat.push({id:++nid,k,s,fresh:true});status.textContent='';renderMat();};
+  addset.append(b);
+}));
+function term(a,k){return k==='1'?String(a):(a===1?'':a)+(k==='x2'?SQ:XV);}
+function fmt(terms){terms=terms.filter(t=>t.c!==0);if(!terms.length)return '0';
+  return terms.map((t,i)=>{const a=Math.abs(t.c);const sg=t.c<0?(i?' − ':'−'):(i?' + ':'');return sg+term(a,t.k);}).join('');}
+function renderMat(){
+  pmat.innerHTML='';
+  if(!mat.length){const e=div('empty');e.textContent='The mat is empty. Use the buttons above to add tiles.';pmat.append(e);}
+  else{
+    const wrap=div('clusters');
+    ORDER.forEach(k=>{
+      const pos=mat.filter(t=>t.k===k&&t.s>0),neg=mat.filter(t=>t.k===k&&t.s<0);
+      if(!pos.length&&!neg.length)return;
+      const cl=div('cluster');
+      [pos,neg].forEach(arr=>{if(!arr.length)return;const row=div('trow');
+        arr.forEach(t=>{const b=tile(t.k,t.s,t.fresh?'new':'n',{tag:'button'});b.type='button';b.dataset.id=t.id;t.fresh=false;
+          b.onclick=()=>tap(t.id);row.append(b);});
+        cl.append(row);});
+      wrap.append(cl);
+    });
+    pmat.append(wrap);
+  }
+  const cnt=(k,s)=>mat.filter(t=>t.k===k&&t.s===s).length;
+  const raw=[];ORDER.forEach(k=>{raw.push({k,c:cnt(k,1)});raw.push({k,c:-cnt(k,-1)});});
+  $('raw').innerHTML=fmt(raw);
+  $('simp').innerHTML=fmt(ORDER.map(k=>({k,c:cnt(k,1)-cnt(k,-1)})));
+}
+function tap(id){
+  if(busy)return;const t=mat.find(m=>m.id===id);if(!t)return;
+  if(mode==='remove'){mat=mat.filter(m=>m.id!==id);}else{t.s=-t.s;}
+  status.textContent='';renderMat();
+  const again=pmat.querySelector(`[data-id="${id}"]`);if(again)again.focus();
+}
+function setMode(m){mode=m;$('m-flip').setAttribute('aria-pressed',m==='flip');$('m-remove').setAttribute('aria-pressed',m==='remove');}
+$('m-flip').onclick=()=>setMode('flip');$('m-remove').onclick=()=>setMode('remove');
+$('clear').onclick=()=>{if(busy)return;mat=[];status.textContent='Mat cleared.';renderMat();};
+$('zp').onclick=()=>{
+  if(busy)return;const ids=[];let n=0;
+  ORDER.forEach(k=>{const pos=mat.filter(t=>t.k===k&&t.s>0),neg=mat.filter(t=>t.k===k&&t.s<0);const p=Math.min(pos.length,neg.length);n+=p;
+    pos.slice(0,p).forEach(t=>ids.push(t.id));neg.slice(0,p).forEach(t=>ids.push(t.id));});
+  if(!n){status.textContent='No zero pairs on the mat. Each shape is all one color.';return;}
+  busy=true;
+  const els=ids.map(id=>pmat.querySelector(`[data-id="${id}"]`)).filter(Boolean);
+  els.forEach(e=>e.classList.add('st-pair'));
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(()=>{els.forEach(e=>e.classList.add('st-vanish'));
+    setTimeout(()=>{mat=mat.filter(t=>!ids.includes(t.id));busy=false;
+      status.textContent=`Cancelled ${n} zero pair${n>1?'s':''}. The value didn't change.`;renderMat();},reduce?0:380);
+  },reduce?0:650);
+};
+// example start: x² + 2x − x + 3 − 2
+[['x2',1],['x',1],['x',1],['x',-1],['1',1],['1',1],['1',1],['1',-1],['1',-1]].forEach(([k,s])=>mat.push({id:++nid,k,s}));
+renderMat();
+
+/* ---------- start ---------- */
+const h=(location.hash||'').slice(1);
+const hi=EX.findIndex(e=>e.id===h);
+select(hi>=0?hi:0);
+if(h==='practice')$('practice').scrollIntoView();
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{setDims();render();},120);});
+})();
+</script>

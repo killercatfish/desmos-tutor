@@ -216,6 +216,15 @@ Rough order, nothing promised.
 **Design rule for anything grade-related:** reward growth, never penalize asking for help. If
 hints cost points, students stop asking the tutor and go back to answer machines.
 
+## Algebra tiles
+
+[`docs/algebra-tiles.html`](https://killercatfish.github.io/desmos-tutor/algebra-tiles.html) is a
+standalone algebra tiles lab: six step-through examples (build an expression, zero pairs, multiply,
+negatives, factor, solve) and a practice mat. It was built in about ten minutes with Claude to help
+another teacher show tiles. It isn't wired into the tutor yet; the idea is a pop-up review the
+tutor can open for a student stuck on the algebra under a graphing problem. Link straight to an
+example with `#build`, `#zero`, `#multiply`, `#negatives`, `#factor`, `#solve`, or `#practice`.
+
 ## Contributing
 
 Issues and pull requests are welcome. The most useful things right now:
